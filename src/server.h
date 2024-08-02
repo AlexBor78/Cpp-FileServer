@@ -14,11 +14,6 @@ namespace Net
         std::mutex Console;
         std::thread ServProccess;
     private:
-        void Exit(int, std::string);
-        void Exit(int);
-        void Exit();
-        std::string GetErrorMessage(int);
-    private:
         void init();
         void proccess();
     public:
@@ -29,7 +24,12 @@ namespace Net
         bool isStarted();
         int GetStatus();  
         int getPort();
-        std::string getIP();      
+        std::string getIP();  
+    private:
+        void Exit(int, std::string);
+        void Exit(int);
+        void Exit();
+        std::string GetErrorMessage(int);    
     public:
         Server(int, std::string);
         Server();

@@ -1,23 +1,44 @@
 CC=g++
 CFlags=-c -Wall
 t=tmp/
-b=builded/
+b=build/
 
-S=server
-SM=ServerMain
-C=client
-CM=ClientMain
+s=server
+S=ServerMain
+c=client
+C=ClientMain
+d=data
+f=file
+lib.o=$(t)$(s).o $(t)$(c).o $(t)$(d).o $(t)$(f).o
 
-ALL: server
+ALL: server client
 
-server: server.o ServerMain.o
-	$(CC) $(t)$(S).o $(t)$(SM).o -o server
-	mv server $(b)server
+server: ServerMain.o lib
+	$(CC) $(t)$(S).o $(lib.o) -o $(s)
+	mv $(s) $(b)$(s)
 
-server.o:
+ServerMain.o:
 	$(CC) $(CFlags) src/$(S).cpp
 	mv $(S).o $(t)$(S).o
 
-ServerMain.o:
-	$(CC) $(CFlags) src/$(SM).cpp
-	mv $(SM).o $(t)$(SM).o
+client: ClientMain.o lib
+	$(CC) $(t)$(C).o $(lib.o) -o $(c)
+	mv $(c) $(b)$(c)
+
+ClientMain.o:
+	$(CC) $(CFlags) src/$(C).cpp
+	mv $(C).o $(t)$(C).o
+
+lib:
+	$(CC) $(CFlags) src/$(s).cpp -o $(s).o
+	$(CC) $(CFlags) src/$(c).cpp -o $(c).o
+	$(CC) $(CFlags) src/$(d).cpp -o $(d).o
+	$(CC) $(CFlags) src/$(f).cpp -o $(f).o
+	mv $(s).o $(t)$(s).o
+	mv $(c).o $(t)$(c).o
+	mv $(d).o $(t)$(d).o
+	mv $(f).o $(t)$(f).o
+
+clean:
+	rm $(t)*
+	rm $(b)*
