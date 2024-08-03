@@ -14,7 +14,8 @@ namespace Net
     ServAddr{ 0 },
     ServAddrLenth(sizeof(ServAddr)),
     ServSock(-1),
-    ServStatus(0)
+    ServStatus(0),
+    isWork(0)
     {}
     Server::Server()
     :
@@ -23,14 +24,15 @@ namespace Net
     ServAddr{ 0 },
     ServAddrLenth(sizeof(ServAddr)),
     ServSock(-1),
-    ServStatus(0)
+    ServStatus(0),
+    isWork(0)
     {}
 
     void Server::start()
     {
         init();
 
-        //ServProccess = std::thread(proccess); // server started
+        //ConsoleThread = std::thread(ChekAdmin, std::ref(isWork));
 
     }
 
@@ -40,14 +42,11 @@ namespace Net
         {
             return;
         }
-
-
     }
 
     void Server::proccess()
     {
         listen(ServSock, 1);
-
     }
 
     void Server::init()
@@ -126,7 +125,6 @@ namespace Net
          * 
          */
         return ServStatus;
-        
     }
 
     int Server::getPort()
@@ -139,20 +137,14 @@ namespace Net
         return ServIPAddr;
     }
 
-} // namespace Net
-
-std::string Net::Server::GetErrorMessage(int errcode)
-{
-/*
- * 1 - "Invalid port or/and ip values";
- * 2 - "Couldn't create socket";
- * 3 - "Couldn't bind socket";
- * 
- * 
- * 
- * 
- * 
-*/
+    std::string Server::GetErrorMessage(int errcode)
+    {
+    /*
+    * 1 - "Invalid port or/and ip values";
+    * 2 - "Couldn't create socket";
+    * 3 - "Couldn't bind socket";
+    * 
+    */
 
     switch (errcode)
     {
@@ -172,6 +164,6 @@ std::string Net::Server::GetErrorMessage(int errcode)
         return "unknow error";
         break;
     }
-
     return "trololololo";
-}
+    }
+} // namespace Net

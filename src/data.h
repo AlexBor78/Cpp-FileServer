@@ -1,6 +1,7 @@
 // data.h
-#pragma once
 #include "Net.h"
+#ifndef DATA_H
+#define DATA_H 1
 
 namespace Net
 {
@@ -14,3 +15,4 @@ namespace Net
     };
     
 } // namespace Net
+#endif

@@ -26,3 +26,5 @@ namespace Net
 #include "client.h"
 #include "data.h"
 #include "file.h"
+
+#define NET_H 1

@@ -1,13 +1,13 @@
 // client.h
-#pragma once
 #include "Net.h"
+#ifndef CLIENT_H
+#define CLIENT_H 1
 
 namespace
 {
     auto connect_to_server = connect;
-    auto send_to_server = send;
+    auto send_to_server = send;   
 } // namespace
-
 
 namespace Net
 {
@@ -18,7 +18,6 @@ namespace Net
         std::string ServIP;
         sockaddr_in ServAddr;
         unsigned int AddrLenth;
-        
     private:
         void init();
     public:
@@ -27,6 +26,7 @@ namespace Net
         void send(std::string);
         //void send(Net::Data);
         //void send(Net::File);
+        //void send()
     public:
         bool isConnected();
         int GetStatus();
@@ -43,3 +43,4 @@ namespace Net
         ~Client();
     };
 } // namespace Net
+#endif

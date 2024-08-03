@@ -13,7 +13,7 @@ lib.o=$(t)$(s).o $(t)$(c).o $(t)$(d).o $(t)$(f).o
 
 ALL: server client
 
-server: ServerMain.o lib
+server: lib ServerMain.o
 	$(CC) $(t)$(S).o $(lib.o) -o $(s)
 	mv $(s) $(b)$(s)
 
@@ -21,7 +21,7 @@ ServerMain.o:
 	$(CC) $(CFlags) src/$(S).cpp
 	mv $(S).o $(t)$(S).o
 
-client: ClientMain.o lib
+client: lib ClientMain.o 
 	$(CC) $(t)$(C).o $(lib.o) -o $(c)
 	mv $(c) $(b)$(c)
 

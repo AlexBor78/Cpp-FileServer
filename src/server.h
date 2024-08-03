@@ -1,6 +1,8 @@
 // server.h
-#pragma once
 #include "Net.h"
+
+#ifndef SERVER_H
+#define SERVER_H 1
 
 namespace Net
 {
@@ -12,14 +14,14 @@ namespace Net
         std::string ServIPAddr;
         sockaddr_in ServAddr;
         std::mutex Console;
-        std::thread ServProccess;
+        std::thread ConsoleThread;
+        bool isWork;
     private:
         void init();
         void proccess();
     public:
         void start();
         void stop();
-        //void send()
     public:
         bool isStarted();
         int GetStatus();  
@@ -36,3 +38,4 @@ namespace Net
         ~Server();    
     };
 } // namespace Net
+#endif
