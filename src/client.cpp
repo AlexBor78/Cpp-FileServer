@@ -42,7 +42,7 @@ namespace Net
 
     void Client::disconnect()
     {
-        
+        close(MySock);
     }
 
     void Client::init()
@@ -82,6 +82,18 @@ namespace Net
             Exit(4);
         }
         Status = 1;
+    }
+
+    char* Client::answer()
+    {
+        char buf[1024];
+
+        if(recvfrom(MySock, buf, 1024, 0, (sockaddr*)&ServAddr, &AddrLenth) < 0)
+        {
+            throw("Couldn't recv answer from server");
+        }
+
+        return buf;
     }
 
     bool Client::isConnected()

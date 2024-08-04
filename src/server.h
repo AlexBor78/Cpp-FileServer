@@ -1,4 +1,4 @@
-// server.h
+ // server.h
 #include "Net.h"
 
 #ifndef SERVER_H
@@ -10,11 +10,13 @@ namespace Net
     {
     private:
         int ServSock, ServPort, ServStatus;
+        std::vector<std::thread> clients;
         unsigned int ServAddrLenth;
         std::string ServIPAddr;
         sockaddr_in ServAddr;
-        std::mutex Console;
-        std::thread ConsoleThread;
+        std::mutex Console, mtxClientCounter;
+        std::thread ProcessThread;
+        int ClientCounter;
         bool isWork;
     private:
         void init();

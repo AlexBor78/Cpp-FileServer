@@ -1,5 +1,4 @@
 // file.cpp
-#pragma once    
 #include "file.h"
 
 namespace Net

@@ -30,29 +30,106 @@ namespace Net
 
     void Server::start()
     {
+        std::cout <<"void Server::start() started" << std::endl;
         init();
 
-        //ConsoleThread = std::thread(ChekAdmin, std::ref(isWork));
+        isWork = 1;
+        ProcessThread = std::thread([&]()
+        {
+            proccess();
+        });
 
+        std::cout <<"void Server::start() ended" << std::endl;
     }
 
     void Server::stop()
     {
+        std::cout <<"void Server::stop() started" << std::endl;
+        isWork = 0;
         if(ServStatus < 0)
         {
             return;
         }
+
+        std::cout << "begin for" << std::endl;
+        for(int i=0; i < clients.size(); i++)
+        {
+            clients.at(i).detach();
+        }
+        std::cout << "End for" <<std::endl;
+        try
+        {
+            ProcessThread.join();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+        //catch()
+        //{
+        //    std::cerr << "error: unkknow error" << std::endl;
+        //}
+        
+        std::cout <<"void Server::stop() ended" << std::endl;
     }
 
     void Server::proccess()
     {
+        std::cout <<"void Server::proccess() started" << std::endl;
+
+        std::cout << "listening will start" << std::endl;
+        int counter = ClientCounter;
         listen(ServSock, 1);
+
+        while(isWork)
+        {
+            if(counter < ClientCounter)
+            {
+                counter++;
+                clients.push_back(std::thread([&]()
+                {
+                    char buf[1024];
+                    if(accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth) < 0)
+                    {
+                        throw("Couldn't accept connectoin");
+                    }
+
+                    Console.lock();
+                    std::cout << "New Client" << std::endl;
+                    Console.unlock();
+
+                    mtxClientCounter.lock();
+                    ClientCounter++;
+                    mtxClientCounter.unlock();
+
+                    std::cout << "recvfrom" << std::endl;
+                    if(recvfrom(ServSock, buf, 1024, 0, (sockaddr*)&ServAddr, &ServAddrLenth) < 0)
+                    {
+                        throw("error to recv");
+                    }
+
+                    std::cout << "sendto" << std::endl;
+                    if(sendto(ServSock, buf, 1024, 0, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
+                    {
+                        throw("error to answer to client");
+                    }
+
+                }));
+            }
+        }
+
+        for(int i=0; i < clients.size(); i++)
+        {
+            clients.at(i).detach();
+        }
+        std::cout <<"void Server::proccess() ended" << std::endl;
     }
 
     void Server::init()
     {
+        std::cout <<"void Server::init() started" << std::endl;
         // test data to create socket
-        if(ServSock <  0 || ServIPAddr.empty())
+        if(ServPort<  0 || ServIPAddr.empty())
         {
             Exit(1);
         }
@@ -75,6 +152,9 @@ namespace Net
         }
 
         ServStatus = 1;
+
+        std::cout << "Inited success" << std::endl;
+        std::cout <<"void Server::init() ended" << std::endl;
     }
 
     bool Server::isStarted()
@@ -84,23 +164,28 @@ namespace Net
 
     void Server::Exit(int errcode, std::string err)
     {
+        std::cout <<"void Server::Exit(int, std::string) started" << std::endl;
         Console.lock();
         std::cout << "SERVER FATAL ERROR: " << err << std::endl;
         std::cout<< "exit code: " << errcode <<std::endl;
         Console.unlock();
 
         stop();
+        std::cout <<"void Server::Exit(int, std::string) will end next" << std::endl;
         exit(errcode);
     }
     
     void Server::Exit(int errcode)
     {
+        std::cout <<"void Server::Exit(int) started" << std::endl;
+
         Console.lock();
         std::cout << "SERVER FATAL ERROR: " << GetErrorMessage(errcode) << std::endl;
         std::cout<< "exit code: " << errcode <<std::endl;
         Console.unlock();
 
         stop();
+        std::cout <<"void Server::Exit(int) will end next" << std::endl;
         exit(errcode);
     }
 
@@ -120,8 +205,7 @@ namespace Net
         /* 
          * 0 - created
          * 1 - inited
-         * 2 - started(working)
-         * 3 - listening
+         * 2 - listening
          * 
          */
         return ServStatus;

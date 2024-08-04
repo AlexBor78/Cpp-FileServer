@@ -30,6 +30,7 @@ namespace Net
     public:
         bool isConnected();
         int GetStatus();
+        char* answer();
         //Net::Server GetConnectedServer();
     private:
         void Exit(int, std::string);
@@ -37,7 +38,7 @@ namespace Net
         void Exit();
         std::string GetErrorMessage(int);  
     public:
-        Client(int, std::string ip);
+        Client(int, std::string);
         Client(Net::Server);
         Client();
         ~Client();

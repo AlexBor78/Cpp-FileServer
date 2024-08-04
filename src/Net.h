@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -16,13 +17,13 @@
 
 namespace Net
 {
-    class Server;
-    class Client;
+    class Server; // done
+    class Client; // done
     
-    class Buffer;
-    class File;
-    class Data;
-    class Error;
+    class Buffer; // done
+    class File; // done
+    class Data; // done
+    class Error; // done
 } // namespace Net
 
 #include "server.h"
