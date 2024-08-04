@@ -1,4 +1,4 @@
-#pragma once
+// data.cpp
 #include "data.h"
 
 namespace Net

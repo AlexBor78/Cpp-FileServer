@@ -9,9 +9,12 @@ c=client
 C=ClientMain
 d=data
 f=file
-lib.o=$(t)$(s).o $(t)$(c).o $(t)$(d).o $(t)$(f).o
+e=error
+buf=buffer
+lib.o=$(t)$(s).o $(t)$(c).o $(t)$(d).o $(t)$(f).o $(t)$(buf).o $(t)$(e).o
 
 ALL: server client
+	echo compiled success
 
 server: lib ServerMain.o
 	$(CC) $(t)$(S).o $(lib.o) -o $(s)
@@ -31,12 +34,16 @@ ClientMain.o:
 
 lib:
 	$(CC) $(CFlags) src/$(s).cpp -o $(s).o
-	$(CC) $(CFlags) src/$(c).cpp -o $(c).o
-	$(CC) $(CFlags) src/$(d).cpp -o $(d).o
-	$(CC) $(CFlags) src/$(f).cpp -o $(f).o
 	mv $(s).o $(t)$(s).o
+	$(CC) $(CFlags) src/$(c).cpp -o $(c).o
 	mv $(c).o $(t)$(c).o
+	$(CC) $(CFlags) src/$(e).cpp -o $(e).o
+	mv $(e).o $(t)$(e).o
+	$(CC) $(CFlags) src/$(buf).cpp -o $(buf).o
+	mv $(buf).o $(t)$(buf).o
+	$(CC) $(CFlags) src/$(d).cpp -o $(d).o
 	mv $(d).o $(t)$(d).o
+	$(CC) $(CFlags) src/$(f).cpp -o $(f).o
 	mv $(f).o $(t)$(f).o
 
 clean:
