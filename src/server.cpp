@@ -14,6 +14,7 @@ namespace Net
     ServAddr{ 0 },
     ServAddrLenth(sizeof(ServAddr)),
     ServSock(-1),
+    ClientCounter(0),
     ServStatus(0),
     isWork(0)
     {}
@@ -24,6 +25,7 @@ namespace Net
     ServAddr{ 0 },
     ServAddrLenth(sizeof(ServAddr)),
     ServSock(-1),
+    ClientCounter(0),
     ServStatus(0),
     isWork(0)
     {}
@@ -78,41 +80,61 @@ namespace Net
         std::cout <<"void Server::proccess() started" << std::endl;
 
         std::cout << "listening will start" << std::endl;
-        int counter = ClientCounter;
+        int counter = 0;
         listen(ServSock, 1);
 
         while(isWork)
         {
-            if(counter < ClientCounter)
+            if(counter <= ClientCounter)
             {
                 counter++;
                 clients.push_back(std::thread([&]()
                 {
-                    char buf[1024];
-                    if(accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth) < 0)
+                    int cltsock = accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth);
+                    if(cltsock < 0)
                     {
                         throw("Couldn't accept connectoin");
                     }
 
                     Console.lock();
-                    std::cout << "New Client" << std::endl;
+                    std::cout << "\n\tNew Client\n" << std::endl;
                     Console.unlock();
 
                     mtxClientCounter.lock();
-                    ClientCounter++;
+                    ++ClientCounter;
                     mtxClientCounter.unlock();
 
-                    std::cout << "recvfrom" << std::endl;
-                    if(recvfrom(ServSock, buf, 1024, 0, (sockaddr*)&ServAddr, &ServAddrLenth) < 0)
-                    {
-                        throw("error to recv");
-                    }
+                    int status = 1;
+                    char buf[256];
+                    int proccessd = 0;
 
-                    std::cout << "sendto" << std::endl;
-                    if(sendto(ServSock, buf, 1024, 0, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
+                    std::cout << "recv-ing" << std::endl;
+                    while (proccessd < 256)
                     {
-                        throw("error to answer to client");
+                        proccessd = recv(cltsock, buf + proccessd, 1024 - proccessd, 0);
                     }
+                    //recvfrom(cltsock, buf, 1024, 0, (sockaddr*)&ServAddr, &ServAddrLenth);
+                    
+                    int size = (uint8_t)(buf[0]);
+                    
+                    std::cout << "recv-ed: " ;
+                    for(int i =0; i< size; i++)
+                    {
+                        std::cout << buf[i + 1];
+                    }
+                    std::cout << std::endl;
+
+                    std::cout << "sending" << std::endl;
+                    
+                    proccessd = 0;
+                    while (proccessd < 255)
+                    {
+                        proccessd = send(cltsock, buf + proccessd, 1024 - proccessd, 0);
+                    }
+                    
+                    mtxClientCounter.lock();
+                    --ClientCounter;
+                    mtxClientCounter.unlock();
 
                 }));
             }

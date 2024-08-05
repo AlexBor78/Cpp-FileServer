@@ -15,6 +15,7 @@ namespace Net
         std::string ServIPAddr;
         sockaddr_in ServAddr;
         std::mutex Console, mtxClientCounter;
+        // std::mutex log; // todo
         std::thread ProcessThread;
         int ClientCounter;
         bool isWork;

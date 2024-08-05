@@ -6,7 +6,7 @@
 namespace
 {
     auto connect_to_server = connect;
-    auto send_to_server = send;   
+    auto send_to_server = send;
 } // namespace
 
 namespace Net
@@ -30,7 +30,7 @@ namespace Net
     public:
         bool isConnected();
         int GetStatus();
-        char* answer();
+        std::string answer();
         //Net::Server GetConnectedServer();
     private:
         void Exit(int, std::string);
