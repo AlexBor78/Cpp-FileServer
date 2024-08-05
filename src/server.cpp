@@ -16,6 +16,7 @@ namespace Net
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
+    maxClients(5),
     isWork(0)
     {}
     Server::Server()
@@ -27,12 +28,14 @@ namespace Net
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
+    maxClients(5),
     isWork(0)
     {}
 
     void Server::start()
     {
-        std::cout <<"void Server::start() started" << std::endl;
+        //std::cout <<"void Server::start() started" << std::endl;
+
         init();
 
         isWork = 1;
@@ -41,53 +44,42 @@ namespace Net
             proccess();
         });
 
-        std::cout <<"void Server::start() ended" << std::endl;
+        //std::cout <<"void Server::start() ended" << std::endl;
     }
 
     void Server::stop()
     {
-        std::cout <<"void Server::stop() started" << std::endl;
+        //std::cout <<"void Server::stop() started" << std::endl;
+
         isWork = 0;
         if(ServStatus < 0)
         {
             return;
         }
 
-        std::cout << "begin for" << std::endl;
         for(int i=0; i < clients.size(); i++)
         {
             clients.at(i).detach();
         }
-        std::cout << "End for" <<std::endl;
-        try
-        {
-            ProcessThread.join();
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << std::endl;
-        }
-        //catch()
-        //{
-        //    std::cerr << "error: unkknow error" << std::endl;
-        //}
         
-        std::cout <<"void Server::stop() ended" << std::endl;
+        ProcessThread.join();
+        
+        //std::cout <<"void Server::stop() ended" << std::endl;
     }
 
     void Server::proccess()
     {
-        std::cout <<"void Server::proccess() started" << std::endl;
+        //std::cout <<"void Server::proccess() started" << std::endl;
 
-        std::cout << "listening will start" << std::endl;
+        std::cout << "Listening for new connections" << std::endl;
         int counter = 0;
-        listen(ServSock, 1);
+        listen(ServSock, maxClients);
 
         while(isWork)
         {
             if(counter <= ClientCounter)
             {
-                counter++;
+                ++counter;
                 clients.push_back(std::thread([&]()
                 {
                     int cltsock = accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth);
@@ -96,46 +88,53 @@ namespace Net
                         throw("Couldn't accept connectoin");
                     }
 
-                    Console.lock();
-                    std::cout << "\n\tNew Client\n" << std::endl;
-                    Console.unlock();
-
                     mtxClientCounter.lock();
                     ++ClientCounter;
                     mtxClientCounter.unlock();
 
-                    int status = 1;
-                    char buf[256];
-                    int proccessd = 0;
+                    Console.lock();
+                    std::cout << "\n\tNew Client\n" << std::endl;
+                    Console.unlock();
 
-                    std::cout << "recv-ing" << std::endl;
-                    while (proccessd < 256)
+                    int status = 1, proccessed = 0, size;
+                    char buf[256];
+
+                    //std::cout << "recv-ing" << std::endl;
+                    while (proccessed < 256)
                     {
-                        proccessd = recv(cltsock, buf + proccessd, 1024 - proccessd, 0);
+                        proccessed = recv(cltsock, buf + proccessed, 1024 - proccessed, 0);
+                        if(proccessed < 0)
+                        {
+                            Console.lock();
+                            std::cerr << "Recv error" << std::endl;
+                            Console.unlock();
+                        }
                     }
-                    //recvfrom(cltsock, buf, 1024, 0, (sockaddr*)&ServAddr, &ServAddrLenth);
                     
-                    int size = (uint8_t)(buf[0]);
-                    
-                    std::cout << "recv-ed: " ;
+                    //std::cout << "recv-ed: " ;
                     for(int i =0; i< size; i++)
                     {
                         std::cout << buf[i + 1];
                     }
                     std::cout << std::endl;
 
-                    std::cout << "sending" << std::endl;
+                    ///std::cout << "sending" << std::endl;
                     
-                    proccessd = 0;
-                    while (proccessd < 255)
+                    proccessed = 0;
+                    while (proccessed < 255)
                     {
-                        proccessd = send(cltsock, buf + proccessd, 1024 - proccessd, 0);
+                        proccessed = send(cltsock, buf + proccessed, 1024 - proccessed, 0);
+                        if(proccessed < 0)
+                        {
+                            Console.lock();
+                            std::cerr << "Send error" << std::endl;
+                            Console.unlock();
+                        }
                     }
                     
                     mtxClientCounter.lock();
                     --ClientCounter;
                     mtxClientCounter.unlock();
-
                 }));
             }
         }

@@ -17,7 +17,7 @@ namespace Net
         std::mutex Console, mtxClientCounter;
         // std::mutex log; // todo
         std::thread ProcessThread;
-        int ClientCounter;
+        int ClientCounter, maxClients;
         bool isWork;
     private:
         void init();

@@ -7,15 +7,15 @@ int main()
     std::string msg;
     
     client.connect();
-    client.send("Hey");
+    //client.send("Hey");
 
-    //std::cout << "Enter message to send" << std::endl;
-    //std::getline(std::cin, msg);
-    //
-    //std::cout << "Sending to server..." << std::endl;
-    //client.send(msg);
-    //std::cout << "Sended success" << std::endl;
-    //
+    std::cout << "Enter message to send" << std::endl;
+    std::getline(std::cin, msg);
+    
+    std::cout << "Sending to server..." << std::endl;
+    client.send(msg);
+    std::cout << "Sended success" << std::endl;
+    
     std::cout << "Trying to recv answer from server" << std::endl;
     std::string answer = client.answer();
     std::cout << "Server answer: " << answer << std::endl;
