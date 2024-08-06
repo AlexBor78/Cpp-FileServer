@@ -23,14 +23,16 @@ namespace Net
     class Buffer; // done
     class File; // done
     class Data; // done
-    class Error; // done
+    //class Error; // trash // don't use
+    //class Logger; // done redefinition or incomplet, what the fuck?
 } // namespace Net
 
-#include "server.h"
-#include "client.h"
+#include "error.h"
+#include "buffer.h"
+//#include "logger.h"
 #include "data.h"
 #include "file.h"
-#include "buffer.h"
-#include "error.h"
+#include "server.h"
+#include "client.h"
 
 #define NET_H 1

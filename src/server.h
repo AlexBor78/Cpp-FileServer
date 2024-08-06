@@ -15,13 +15,17 @@ namespace Net
         std::string ServIPAddr;
         sockaddr_in ServAddr;
         std::mutex Console, mtxClientCounter;
-        // std::mutex log; // todo
+        // std::mutex log; // todo logger
         std::thread ProcessThread;
-        int ClientCounter, maxClients;
+        int ClientCounter, ServMaxClients;
+        //Net::Logger log;
         bool isWork;
     private:
         void init();
         void proccess();
+        int recvMsg(int);
+        // void recvData(int);
+        // void recvFile(int);
     public:
         void start();
         void stop();

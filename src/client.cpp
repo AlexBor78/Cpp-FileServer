@@ -79,76 +79,9 @@ namespace Net
         std::cout << "\nInited && connected success\n" << std::endl;
     }
 
-    //void Client::send(std::string message)
-    //{
-    //    std::cout << "Client::send() started" << std::endl;
-    //    Status = 2;
-    //    //if(send_to_server(MySock, message.c_str(), message.size(), 0) < 0)
-    //    int size = message.size() + 1, sended;
-    //    char* buf = new char[1024]; // todo make it secure, may be mem leakSS
-//
-    //    buf[0] = 's';
-//
-    //    for(int i = 0; i < message.size(); i++)
-    //    {
-    //        buf[i + 1] = message.at(i);
-    //    }
-    //    for(int i=0; i < 1024 - message.size())
-    //    {
-    //        
-    //    }
-//
-    //    std::cout << "Try to send" << std::endl;
-    //    // if(sendto(MySock, buf, size, 0, (sockaddr*)&ServAddr, AddrLenth) < 0)
-    //    // {
-    //    //     Exit(4);
-    //    // }
-//
-    //    while (sended < size)
-    //    {
-    //        sended = send_to_server(MySock, buf + sended, size - sended, 0);
-    //        if(sended < 0)
-    //        {
-    //            Exit(4);
-    //        }
-    //    }
-    //    std::cout << "Sended" << std::endl;
-//
-    //    Status = 1;
-    //    std::cout << "Client::send() ended" << std::endl;
-    //}
-
     void Client::send(std::string message)
     {
-        Status = 2;
-        std::cout << "Client::send() started" << std::endl;
-
-        int msgsize = message.size(), sended = 0;
-        char* buf = new char[1024];
-        if(message.size() > 256)
-        {
-            throw("Message to big");
-        }
-        buf[0] = (uint8_t)(message.size());
-
-        for(int i = 0; i < msgsize; i++)
-        {
-            buf[i + 1] = message.at(i);
-        }
-
-        std::cout << "Try to send" << std::endl;
-
-        while(sended < 256)
-        {
-            sended = send_to_server(MySock, buf + sended, 1024 - sended, 0);
-            if(sended < 0)
-            {
-                Exit(4);
-            }
-        }
-        std::cout << "sended" << std::endl;
-
-        std::cout << "Client::send() ended" << std::endl;
+        
     }
 
     std::string Client::answer()

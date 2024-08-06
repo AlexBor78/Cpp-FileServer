@@ -16,7 +16,7 @@ namespace Net
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
-    maxClients(5),
+    ServMaxClients(5),
     isWork(0)
     {}
     Server::Server()
@@ -28,14 +28,12 @@ namespace Net
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
-    maxClients(5),
+    ServMaxClients(5),
     isWork(0)
     {}
 
     void Server::start()
     {
-        //std::cout <<"void Server::start() started" << std::endl;
-
         init();
 
         isWork = 1;
@@ -43,14 +41,10 @@ namespace Net
         {
             proccess();
         });
-
-        //std::cout <<"void Server::start() ended" << std::endl;
     }
 
     void Server::stop()
     {
-        //std::cout <<"void Server::stop() started" << std::endl;
-
         isWork = 0;
         if(ServStatus < 0)
         {
@@ -63,17 +57,13 @@ namespace Net
         }
         
         ProcessThread.join();
-        
-        //std::cout <<"void Server::stop() ended" << std::endl;
     }
 
     void Server::proccess()
     {
-        //std::cout <<"void Server::proccess() started" << std::endl;
-
         std::cout << "Listening for new connections" << std::endl;
         int counter = 0;
-        listen(ServSock, maxClients);
+        listen(ServSock, ServMaxClients);
 
         while(isWork)
         {
@@ -82,73 +72,31 @@ namespace Net
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    int cltsock = accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth);
-                    if(cltsock < 0)
+                    int CltSock = accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth);
+                    if(CltSock < 0)
                     {
-                        throw("Couldn't accept connectoin");
+                        throw("Couldn't accept new connection");
                     }
 
-                    mtxClientCounter.lock();
-                    ++ClientCounter;
-                    mtxClientCounter.unlock();
+                    char *buf = new char[5];
+                    int8_t stat;
+                    int proccessed = 0;
+                    uint8_t MajVer, MinVer1, MinVer2, ActoinType, addData;
 
-                    Console.lock();
-                    std::cout << "\n\tNew Client\n" << std::endl;
-                    Console.unlock();
-
-                    int status = 1, proccessed = 0, size;
-                    char buf[256];
-
-                    //std::cout << "recv-ing" << std::endl;
-                    while (proccessed < 256)
-                    {
-                        proccessed = recv(cltsock, buf + proccessed, 1024 - proccessed, 0);
-                        if(proccessed < 0)
-                        {
-                            Console.lock();
-                            std::cerr << "Recv error" << std::endl;
-                            Console.unlock();
-                        }
-                    }
                     
-                    //std::cout << "recv-ed: " ;
-                    for(int i =0; i< size; i++)
-                    {
-                        std::cout << buf[i + 1];
-                    }
-                    std::cout << std::endl;
-
-                    ///std::cout << "sending" << std::endl;
-                    
-                    proccessed = 0;
-                    while (proccessed < 255)
-                    {
-                        proccessed = send(cltsock, buf + proccessed, 1024 - proccessed, 0);
-                        if(proccessed < 0)
-                        {
-                            Console.lock();
-                            std::cerr << "Send error" << std::endl;
-                            Console.unlock();
-                        }
-                    }
-                    
-                    mtxClientCounter.lock();
-                    --ClientCounter;
-                    mtxClientCounter.unlock();
                 }));
             }
         }
+    }
 
-        for(int i=0; i < clients.size(); i++)
-        {
-            clients.at(i).detach();
-        }
-        std::cout <<"void Server::proccess() ended" << std::endl;
+    int Server::recvMsg(int CltSock)
+    {
+        
+        return 0;
     }
 
     void Server::init()
     {
-        std::cout <<"void Server::init() started" << std::endl;
         // test data to create socket
         if(ServPort<  0 || ServIPAddr.empty())
         {
@@ -175,7 +123,6 @@ namespace Net
         ServStatus = 1;
 
         std::cout << "Inited success" << std::endl;
-        std::cout <<"void Server::init() ended" << std::endl;
     }
 
     bool Server::isStarted()
@@ -185,28 +132,23 @@ namespace Net
 
     void Server::Exit(int errcode, std::string err)
     {
-        std::cout <<"void Server::Exit(int, std::string) started" << std::endl;
         Console.lock();
         std::cout << "SERVER FATAL ERROR: " << err << std::endl;
         std::cout<< "exit code: " << errcode <<std::endl;
         Console.unlock();
 
         stop();
-        std::cout <<"void Server::Exit(int, std::string) will end next" << std::endl;
         exit(errcode);
     }
     
     void Server::Exit(int errcode)
     {
-        std::cout <<"void Server::Exit(int) started" << std::endl;
-
         Console.lock();
         std::cout << "SERVER FATAL ERROR: " << GetErrorMessage(errcode) << std::endl;
         std::cout<< "exit code: " << errcode <<std::endl;
         Console.unlock();
 
         stop();
-        std::cout <<"void Server::Exit(int) will end next" << std::endl;
         exit(errcode);
     }
 
