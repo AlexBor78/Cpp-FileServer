@@ -23,7 +23,9 @@ namespace Net
     private:
         void init();
         void proccess();
-        int recvMsg(int);
+        int sendSuccess(const int&);
+        int chekConnection(const int&);
+        int recvMsg(const int&, uint32_t);
         // void recvData(int);
         // void recvFile(int);
     public:

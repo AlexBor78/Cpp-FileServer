@@ -11,10 +11,11 @@ namespace Net
         const char* ErrMsg;
         int ErrCode;
     public:
-        const char* getErrMessage();
+        const char* what();
         int getErrCode();
     public:
         Error(int, const char*);
+        Error(const char*);
         ~Error();
     };
 } // namespace Net

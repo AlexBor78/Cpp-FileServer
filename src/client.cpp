@@ -42,6 +42,28 @@ namespace Net
 
     void Client::disconnect()
     {
+        int proccessed = 0;
+        Protocol::Head *head = new Protocol::Head();
+        head->Action = EndSesion;
+
+        while (proccessed < Protocol::HeadSize)
+        {
+            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                break; // it can be in destructor and i shouldn't use throw();
+            }
+        }
+
+        try
+        {
+            endOperation();       
+        }
+        catch(const char* e)
+        {
+            std::cout << e << std::endl;
+        }
+        
         close(MySock);
     }
 
@@ -76,34 +98,124 @@ namespace Net
         Status = 1;
 
         // Success connected to server
+        // if(!chekConnection())
+        // {
+            // Exit(3);
+        // }
         std::cout << "\nInited && connected success\n" << std::endl;
     }
 
-    void Client::send(std::string message)
+    bool Client::chekConnection()
     {
-        
+        Protocol::Middle *answer = new Protocol::Middle();
+        Protocol::Head *head = new Protocol::Head();
+        head->Action = ChekConnect;
+        int proccessed = 0;
+
+        while (proccessed < Protocol::HeadSize)
+        {
+            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                return 0;
+            }
+        }
+
+        proccessed = 0;
+
+        while(proccessed < Protocol::MiddleSize)
+        {
+            proccessed = recv(MySock, answer, Protocol::MiddleSize, 0);
+            if(proccessed < 0)
+            {
+                return 0;
+            }
+        }
+
+        return answer->Status == SuccesAction;
+        // you can write:
+        return answer->Status; // it should work
     }
 
-    std::string Client::answer()
+    bool Client::endOperation()
     {
-        std::cout << "Client::answer started" << std::endl;
-        int recvd = 0, size;
-        char buf[256], *ans;
-        
-        while (recvd < 255)
-        {
-            recvd = recv(MySock, buf, 256, 0);
-        }
-        size  = (uint8_t)(buf[0]);
+        Protocol::Middle *close = new Protocol::Middle();
+        int proccessed(0);
 
-        ans = new char[size];
+        std::cout << "recv-ing closing data" << std::endl;
+
+        while (proccessed < Protocol::MiddleSize)
+        {
+            proccessed = recv(MySock, close, Protocol::MiddleSize, 0);
+            if(proccessed < 0)
+            {
+                return 0;
+            }
+        }
+
+        std::cout << "recv-ed closing data" << std::endl;
+
+        return close->Status;
+    }
+
+    std::string Client::send(const std::string& message)
+    {
+        std::string returning;
+        Protocol::Head *head = new Protocol::Head();
+        int proccessed = 0, size = message.size();
+        char *answer = new char[size];
+
+        head->Action = SendMessage;
+        head->AdditionalData = size;
+
+        // send head: what server should doing
+        while (proccessed < Protocol::HeadSize)
+        {
+            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                throw("Head send error");
+            }
+        }
+
+        //send message
+        proccessed = 0;
+        while (proccessed < size)
+        {
+            proccessed = send_to_server(MySock, message.c_str(), size, 0);
+            if(proccessed < 0)
+            {
+                throw("Message send error");
+            }
+        }
+        
+        // recv message
+        std::cout << "recv-ing" << std::endl;
+        proccessed = 0;
+        while (proccessed < size)
+        {
+            proccessed = recv(MySock, answer, size, 0);
+            if(proccessed < 0)
+            {
+                throw("Message recv error");
+            }
+        }
+
+        std::cout <<  "recv-ed" <<std::endl;
+
+        // converting char* to std::string
         for(int i=0; i < size; i++)
         {
-            ans[i] = buf[i + 1];
+            returning.push_back(answer[i]);
         }
+        delete[] answer;
 
-        std::cout << "Client::answer ended" << std::endl;
-        return std::string(ans);
+        std::cout << "Server answer: " << returning << std::endl;
+
+        std::cout << "End operation start" << std::endl;
+        endOperation();
+        std::cout << "End operatoin" << std::endl;
+        return returning;
     }
 
     bool Client::isConnected()

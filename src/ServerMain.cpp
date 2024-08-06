@@ -2,12 +2,8 @@
 
 int main()
 {
-
-    //Net::Server server(35643, "192.168.124.181");
-    Net::Server server(5454, "127.0.0.2");
+    Net::Server server(5554, "127.0.0.2");
     server.start();
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 1s
-    //server.stop();
 
     std::cout << "Server started" << std::endl;
     std::string enter;
@@ -22,6 +18,6 @@ int main()
         }
     }
     
-    std::cout << "Success" << std::endl;
+    std::cout << "Success end of programm" << std::endl;
     return 0;
 }

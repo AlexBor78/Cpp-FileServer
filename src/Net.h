@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <cmath>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,21 +18,21 @@
 
 namespace Net
 {
+    class Protocol;
     class Server; // done
     class Client; // done
     
     class Buffer; // done
     class File; // done
-    class Data; // done
+    //class Data; // done
+
     //class Error; // trash // don't use
     //class Logger; // done redefinition or incomplet, what the fuck?
 } // namespace Net
 
-#include "error.h"
-#include "buffer.h"
-//#include "logger.h"
-#include "data.h"
-#include "file.h"
+//#include "buffer.h"
+// #include "data.h"
+#include "protocol.h"
 #include "server.h"
 #include "client.h"
 

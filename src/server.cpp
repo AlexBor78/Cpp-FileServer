@@ -1,6 +1,8 @@
 #include "server.h"
 
-namespace Net
+#define WORK && isWork
+
+namespace Net // class Server
 {
     Server::~Server()
     {
@@ -34,6 +36,10 @@ namespace Net
 
     void Server::start()
     {
+        if(isWork)
+        {
+            return;
+        }
         init();
 
         isWork = 1;
@@ -61,7 +67,7 @@ namespace Net
 
     void Server::proccess()
     {
-        std::cout << "Listening for new connections" << std::endl;
+        std::cout << "Listening for new connections..." << std::endl;
         int counter = 0;
         listen(ServSock, ServMaxClients);
 
@@ -78,20 +84,125 @@ namespace Net
                         throw("Couldn't accept new connection");
                     }
 
-                    char *buf = new char[5];
-                    int8_t stat;
-                    int proccessed = 0;
-                    uint8_t MajVer, MinVer1, MinVer2, ActoinType, addData;
+                    Console.lock();
+                    std::cout << "New connection" << std::endl;
+                    Console.unlock();
 
-                    
+                    bool ConnectoinOpen = 1;
+                    int proccessed = 0;
+                    Protocol::Head *head = new Protocol::Head();
+
+                    while (ConnectoinOpen WORK) 
+                    {
+                        proccessed = 0;
+                        while (proccessed < Protocol::HeadSize WORK)
+                        {
+                            proccessed = recv(CltSock, head, Protocol::HeadSize, 0);
+                            // if(proccessed < 0)
+                            // {
+                                // std::cout << "noting to recv" << std::endl;
+                                // throw(1);
+                            // }
+                        }
+
+                        switch (head->Action)
+                        {
+                        case(ChekConnect):
+                            chekConnection(CltSock);
+                            break;
+                        case(SendMessage):
+                            recvMsg(CltSock, head->AdditionalData);
+                            break;
+                        case(EndSesion):
+                            sendSuccess(CltSock);
+                            ConnectoinOpen = 0;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    close(CltSock);
+                    Console.lock();
+                    std::cout << "Connection closed success" << std::endl;
+                    Console.unlock();
                 }));
             }
         }
     }
 
-    int Server::recvMsg(int CltSock)
+    int Server::sendSuccess(const int& CltSock)
     {
+        int proccessed = 0;
+        Protocol::Middle *answer = new Protocol::Middle();
+        answer->Status = SuccesAction;
+
+        std::cout << "starting answering" << std::endl;
         
+        while (proccessed < Protocol::MiddleSize WORK)
+        {
+            proccessed = send(CltSock, answer, Protocol::MiddleSize, 0);
+            if(proccessed < 0)
+            {
+                std::cout << "Error" << std::endl;
+                throw("\"Succcess answering\" error");
+            }
+        }    
+        return 0;  
+    }
+
+    int Server::chekConnection(const int& CltSock)
+    {
+        std::cout << "Chek connection" << std::endl;
+        int proccessed = 0;
+        Protocol::Middle *answer = new Protocol::Middle();
+        answer->Status = SuccesAction;
+        
+        while (proccessed < 0 WORK)
+        {
+            proccessed = send(CltSock, answer, Protocol::MiddleSize, 0);
+            if(proccessed < 0)
+            {
+                throw("chek connection error");
+            }
+        }        
+        return 0;
+    }
+
+    int Server::recvMsg(const int& CltSock, uint32_t size)
+    {
+        char *msg = new char[size];
+        int proccessed = 0;
+
+        while(proccessed < size)
+        {
+            proccessed = recv(CltSock, msg, size, 0);
+            if(proccessed < 0)
+            {
+                throw("Message recv error");
+            }
+        }
+
+        Console.lock();
+        std::cout << "New message:" << std::string(msg) << std::endl;
+        Console.unlock();
+
+        proccessed = 0;
+
+        std::cout << "returning message..." << std::endl;
+
+        while (proccessed < size)
+        {
+            proccessed = send(CltSock, msg, size, 0);
+            if(proccessed < 0)
+            {
+                throw("send error");
+            }
+        }      
+
+        std::cout << "Message was return" << std::endl;
+
+        sendSuccess(CltSock);
+        delete[] msg;
         return 0;
     }
 
@@ -127,7 +238,7 @@ namespace Net
 
     bool Server::isStarted()
     {
-        return ServStatus > 1;
+        return isWork;
     }
 
     void Server::Exit(int errcode, std::string err)
@@ -192,7 +303,6 @@ namespace Net
     * 3 - "Couldn't bind socket";
     * 
     */
-
     switch (errcode)
     {
     case(1):

@@ -23,15 +23,15 @@ namespace Net
     public:
         void connect();
         void disconnect();
-        void send(std::string);
+        bool chekConnection();
+        bool endOperation();
+        std::string send(const std::string&);
         //void send(Net::Data);
         //void send(Net::File);
         //void send()
     public:
         bool isConnected();
         int GetStatus();
-        std::string answer();
-        //Net::Server GetConnectedServer();
     private:
         void Exit(int, std::string);
         void Exit(int);
