@@ -23,12 +23,15 @@ namespace Net
     private:
         void init();
         void proccess();
+        int ServSend(const int&, void*, unsigned int, int);
+        int ServRecv(const int&, void*, unsigned int, int);
+        
         int sendSuccess(const int&);
-        Protocol::Head* recvHead(const int&);
+        int sendFail(const int&);
+        int recvHead(const int&, Protocol::Head*);
+        
         int chekConnection(const int&);
         int recvMsg(const int&, uint32_t);
-        // void recvData(int);
-        // void recvFile(int);
     public:
         void start();
         void stop();
@@ -38,9 +41,7 @@ namespace Net
         int getPort();
         std::string getIP();  
     private:
-        void Exit(int, std::string);
         void Exit(int);
-        void Exit();
         std::string GetErrorMessage(int);    
     public:
         Server(int, std::string);

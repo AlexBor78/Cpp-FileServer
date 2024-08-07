@@ -1,6 +1,7 @@
 #include "server.h"
 
 #define WORK && isWork
+#define SERVER_MAX_CLIENT 5
 
 namespace Net // class Server
 {
@@ -18,7 +19,7 @@ namespace Net // class Server
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
-    ServMaxClients(5),
+    ServMaxClients(SERVER_MAX_CLIENT),
     isWork(0)
     {}
     Server::Server()
@@ -30,7 +31,7 @@ namespace Net // class Server
     ServSock(-1),
     ClientCounter(0),
     ServStatus(0),
-    ServMaxClients(5),
+    ServMaxClients(SERVER_MAX_CLIENT),
     isWork(0)
     {}
 
@@ -52,27 +53,28 @@ namespace Net // class Server
     void Server::stop()
     {
         isWork = 0;
-        if(ServStatus < 0)
+        if(clients.empty())
         {
             return;
         }
 
-        // std::cout << "Start joining / detaching client" << std::endl;
         for(int i=0; i < clients.size(); i++)
         {
-            // std::cout << "Joing: " << i << std::endl;
+            std::cout << "Joing: " << i << std::endl;
             clients.at(i).detach(); // error here
         }
 
-        // std::cout << "Client joined / detached" << std::endl;
-        
         ProcessThread.join();
     }
 
     void Server::proccess()
     {
         std::cout << "Listening for new connections..." << std::endl;
+
+        clients.clear();
+        ClientCounter = 0;
         int counter = 0;
+
         listen(ServSock, ServMaxClients);
 
         while(isWork)
@@ -82,7 +84,7 @@ namespace Net // class Server
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    int CltSock = accept(ServSock, (sockaddr*)&ServAddr, &ServAddrLenth);
+                    int CltSock = accept(ServSock, 0, 0);
                     if(CltSock < 0)
                     {
                         throw("Couldn't accept new connection");
@@ -96,7 +98,6 @@ namespace Net // class Server
                     mtxClientCounter.unlock();
 
                     bool ConnectoinOpen = 1;
-                    int proccessed = 0;
                     Protocol::Head *head;
 
                     while (ConnectoinOpen WORK) 
@@ -105,21 +106,55 @@ namespace Net // class Server
                         {
                             ConnectoinOpen = 0;
                         }
-                        head = recvHead(CltSock);
+
+                        head = new Protocol::Head();
+                        if(recvHead(CltSock, head) < 0)
+                        {
+                            Console.lock();
+                            std::cerr << "Coulnd't recv Protocol::Head" << std::endl;
+                            Console.unlock();
+                            return;
+                        }
 
                         switch (head->Action)
                         {
                         case(ChekConnect):
-                            chekConnection(CltSock);
-                            break;
+                            if(chekConnection(CltSock) < 0)
+                            {
+                                Console.lock();
+                                std::cerr << "Coulnd't check connection" << std::endl;
+                                Console.unlock();
+                                return;
+                            } break;
                         case(SendMessage):
-                            recvMsg(CltSock, head->AdditionalData);
-                            break;
+                            if(recvMsg(CltSock, head->AdditionalData) < 0)
+                            {
+                                Console.lock();
+                                std::cerr << "Coulnd't recv message" << std::endl;
+                                Console.unlock();
+                                return;
+                            } break;
                         case(EndSesion):
-                            sendSuccess(CltSock);
+                            if(sendSuccess(CltSock) < 0)
+                            {
+                                Console.lock();
+                                std::cerr << "Coulnd't close sesion" << std::endl;
+                                Console.unlock();
+                                return;
+                            }
                             ConnectoinOpen = 0;
                             break;
                         default:
+                            Console.lock();
+                            std::cerr << "Unknow Action" << std::endl;
+                            Console.unlock();
+                            if(sendFail(CltSock) < 0)
+                            {
+                                Console.lock();
+                                std::cerr << "Coldn't send Fail" << std::endl;
+                                Console.unlock();
+                            }
+                            return;
                             break;
                         }
                         delete head; // witout this line will mem leak
@@ -134,99 +169,113 @@ namespace Net // class Server
         }
     }
 
-    int Server::sendSuccess(const int& CltSock)
+    int Server::ServSend(const int &CltSock, void *buf, unsigned int size, int flags)
     {
-        int proccessed = 0;
-        Protocol::Middle *answer = new Protocol::Middle();
-        answer->Status = SuccesAction;
-        
-        while (proccessed < Protocol::MiddleSize WORK)
+        int proccessed(0);
+        while(proccessed < size WORK)
         {
-            proccessed = send(CltSock, answer, Protocol::MiddleSize, 0);
+            proccessed = send(CltSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
-                std::cout << "Error" << std::endl;
-                throw("\"Succcess answering\" error");
+                return -1;
             }
-        }    
-        std::cout << "End sended success\n" << std::endl;
+        }
+        return 0;
+    }
+
+    int Server::ServRecv(const int& CltSock, void *buf, unsigned int size, int flags)
+    {
+        int proccessed(0);
+        while(proccessed  < size WORK)
+        {
+            proccessed = recv(CltSock, buf + proccessed, size - proccessed, flags);
+            if(proccessed  < 0)
+            {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    int Server::sendSuccess(const int& CltSock)
+    {
+        Protocol::Middle *answer = new Protocol::Middle();
+        answer->Status = SuccesAction;
+
+        if(ServSend(CltSock, answer, Protocol::MiddleSize, 0) < 0)
+        {
+            return -1;
+        }   
+        delete answer;
         return 0;  
     }
 
-    Protocol::Head* Server::recvHead(const int &CltSock) // unused
+    int Server::sendFail(const int& CltSock)
     {
-        int proccessed(0);
-        Protocol::Head* head = new Protocol::Head();
-        while (proccessed < Protocol::HeadSize WORK)
+        Protocol::Middle *answer = new Protocol::Middle();
+        answer->Status = FaildAction;
+
+        if(ServSend(CltSock, answer, Protocol::MiddleSize, 0) < 0)
         {
-            proccessed = recv(CltSock, head, Protocol::HeadSize, 0);
-            if(proccessed < 0)
-            {
-                throw("recv error");
-            }
+            return -1;
         }
-        std::cout << "Head ercv-ed success" << std::endl;
-        return head;        
+        delete answer;
+        return 0;  
+    }
+
+    int Server::recvHead(const int &CltSock, Protocol::Head* head)
+    {
+        if(ServRecv(CltSock, head, Protocol::HeadSize, 0) < 0)
+        {
+            return -1;
+        }
+        return 0;        
     }
 
     int Server::chekConnection(const int& CltSock)
     {
-        std::cout << "Chek connection" << std::endl;
-        int proccessed = 0;
         Protocol::Middle *answer = new Protocol::Middle();
         answer->Status = SuccesAction;
         
-        while (proccessed < Protocol::MiddleSize WORK)
+        if(ServSend(CltSock, answer, Protocol::MiddleSize, 0) < 0)
         {
-            proccessed = send(CltSock, answer, Protocol::MiddleSize, 0);
-            if(proccessed < 0)
-            {
-                throw("chek connection error");
-            }
-        }        
+            return -1;
+        }
+        delete answer;
         return 0;
     }
 
     int Server::recvMsg(const int& CltSock, uint32_t size)
     {
         char *msg = new char[size];
-        int proccessed = 0;
 
-        while(proccessed < size WORK)
+        if(ServRecv(CltSock, msg, size, 0) < 0)
         {
-            proccessed = recv(CltSock, msg, size, 0);
-            if(proccessed < 0)
-            {
-                throw("Message recv error");
-            }
+            return -1;
         }
 
         Console.lock();
         std::cout << "New message:" << std::string(msg) << std::endl;
         Console.unlock();
 
-        proccessed = 0;
-
-        while (proccessed < size WORK)
+        if(ServSend(CltSock, msg, size, 0) < 0)
         {
-            proccessed = send(CltSock, msg, size, 0);
-            if(proccessed < 0)
-            {
-                throw("send error");
-            }
-        }      
+            return -1;
+        }    
 
-        std::cout << "Message was return" << std::endl;
-
-        sendSuccess(CltSock);
         delete[] msg;
+
+        if(sendSuccess(CltSock) < 0)
+        {
+            return -1;
+        }
         return 0;
     }
 
     void Server::init()
     {
         // test data to create socket
-        if(ServPort<  0 || ServIPAddr.empty())
+        if(ServPort < 0 || ServIPAddr.empty())
         {
             Exit(1);
         }
@@ -243,18 +292,11 @@ namespace Net // class Server
         ServAddr.sin_port = htons(ServPort);
         ServAddr.sin_addr.s_addr = inet_addr(ServIPAddr.c_str());
 
-        try
+        if(bind(ServSock, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
         {
-            if(bind(ServSock, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
-            {
-                Exit(3);
-            }
-        }
-        catch(const std::system_error &e)
-        {
-            std::cout << "catched error: " << e.what() << std::endl;
             Exit(3);
         }
+
         ServStatus = 1;
 
         std::cout << "Inited success" << std::endl;
@@ -263,39 +305,6 @@ namespace Net // class Server
     bool Server::isStarted()
     {
         return isWork;
-    }
-
-    void Server::Exit(int errcode, std::string err)
-    {
-        Console.lock();
-        std::cout << "SERVER FATAL ERROR: " << err << std::endl;
-        std::cout<< "exit code: " << errcode <<std::endl;
-        Console.unlock();
-
-        stop();
-        exit(errcode);
-    }
-    
-    void Server::Exit(int errcode)
-    {
-        Console.lock();
-        std::cout << "SERVER FATAL ERROR: " << GetErrorMessage(errcode) << std::endl;
-        std::cout<< "exit code: " << errcode <<std::endl;
-        Console.unlock();
-
-        stop();
-        exit(errcode);
-    }
-
-    void Server::Exit()
-    {
-        Console.lock();
-        std::cout << "SERVER FATAL ERROR: unknow error" << std::endl;
-        std::cout<< "unknow exit code" <<std::endl;
-        Console.unlock();
-
-        stop();
-        exit(-1);
     }
 
     int Server::GetStatus()
@@ -317,6 +326,17 @@ namespace Net // class Server
     std::string Server::getIP()
     {
         return ServIPAddr;
+    }
+
+    void Server::Exit(int errcode)
+    {
+        Console.lock();
+        std::cout << "SERVER FATAL ERROR: " << GetErrorMessage(errcode) << std::endl;
+        std::cout<< "exit code: " << errcode <<std::endl;
+        Console.unlock();
+
+        stop();
+        exit(errcode);
     }
 
     std::string Server::GetErrorMessage(int errcode)
