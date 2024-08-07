@@ -24,7 +24,9 @@ namespace Net
         void connect();
         void disconnect();
         bool chekConnection();
-        bool endOperation();
+        bool recvSuccess();
+        int sendHead(Net::Protocol::Head::ActionType);
+        int sendHead(Net::Protocol::Head::ActionType, uint32_t);
         std::string send(const std::string&);
         //void send(Net::Data);
         //void send(Net::File);

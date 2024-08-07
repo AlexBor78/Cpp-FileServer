@@ -2,22 +2,31 @@
 
 int main()
 {
-    Net::Server server(5554, "127.0.0.2");
-    server.start();
-
-    std::cout << "Server started" << std::endl;
-    std::string enter;
-
-    while (1)
+    try
     {
-        std::cout << "Enter \"stop\" when you want to stop server" << std::endl;
-        std::getline(std::cin, enter);
-        if(enter == "stop")
+        Net::Server server(PORT, IP);
+        server.start();
+        std::cout << "Server started" << std::endl;
+        std::string enter;
+
+        while (1)
         {
-            break;
+            std::cout << "Enter \"stop\" when you want to stop server" << std::endl;
+            std::getline(std::cin, enter);
+            if(enter == "stop")
+            {
+                break;
+            }
         }
+        
+        std::cout << "Success end of programm" << std::endl;
+    }
+    catch(const std::system_error &e)
+    {
+        std::cerr << "Error: " << e.what() << '\n';
+        std::cerr << "Exit code: " << e.code() << std::endl;
+        std::cout << "Unsuccess end of programm" << std::endl;
     }
     
-    std::cout << "Success end of programm" << std::endl;
     return 0;
 }

@@ -24,6 +24,7 @@ namespace Net
         void init();
         void proccess();
         int sendSuccess(const int&);
+        Protocol::Head* recvHead(const int&);
         int chekConnection(const int&);
         int recvMsg(const int&, uint32_t);
         // void recvData(int);

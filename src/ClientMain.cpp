@@ -3,7 +3,7 @@
 int main()
 {
     //Net::Client client(3243, "192.168.124.181");
-    Net::Client client(5554, "127.0.0.2");
+    Net::Client client(PORT, IP);
     std::string msg;
     
     client.connect();
@@ -16,3 +16,8 @@ int main()
     std::cout << "Success end of programm" << std::endl;
     return 0;
 }
+
+/*
+fix some bugs
+write some functions to easer developing int future
+*/

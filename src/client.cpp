@@ -42,22 +42,10 @@ namespace Net
 
     void Client::disconnect()
     {
-        int proccessed = 0;
-        Protocol::Head *head = new Protocol::Head();
-        head->Action = EndSesion;
-
-        while (proccessed < Protocol::HeadSize)
-        {
-            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
-            if(proccessed < 0)
-            {
-                break; // it can be in destructor and i shouldn't use throw();
-            }
-        }
-
         try
         {
-            endOperation();       
+            sendHead(EndSesion);
+            recvSuccess();       
         }
         catch(const char* e)
         {
@@ -137,12 +125,49 @@ namespace Net
         return answer->Status; // it should work
     }
 
-    bool Client::endOperation()
+    int Client::sendHead(Net::Protocol::Head::ActionType action)
+    {
+        Protocol::Head *head = new Protocol::Head();
+        int proccessed(0);
+
+        head->Action = action;
+
+        while(proccessed < Protocol::HeadSize)
+        {
+            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                throw("Couldn't send head");
+            }
+        }
+        std::cout << "Head sended success" << std::endl;
+        return 0;
+    }
+
+    int Client::sendHead(Net::Protocol::Head::ActionType action, uint32_t adddata)
+    {
+        Protocol::Head *head = new Protocol::Head();
+        int proccessed(0);
+
+        head->Action = action;
+        head->AdditionalData = adddata;
+
+        while(proccessed < Protocol::HeadSize)
+        {
+            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                throw("Couldn't send head");
+            }
+        }
+        std::cout << "Head sended success" << std::endl;
+        return 0;
+    }
+
+    bool Client::recvSuccess()
     {
         Protocol::Middle *close = new Protocol::Middle();
         int proccessed(0);
-
-        std::cout << "recv-ing closing data" << std::endl;
 
         while (proccessed < Protocol::MiddleSize)
         {
@@ -153,30 +178,18 @@ namespace Net
             }
         }
 
-        std::cout << "recv-ed closing data" << std::endl;
-
+        std::cout << "End sended success" << std::endl;
         return close->Status;
     }
 
     std::string Client::send(const std::string& message)
     {
         std::string returning;
-        Protocol::Head *head = new Protocol::Head();
         int proccessed = 0, size = message.size();
         char *answer = new char[size];
 
-        head->Action = SendMessage;
-        head->AdditionalData = size;
-
         // send head: what server should doing
-        while (proccessed < Protocol::HeadSize)
-        {
-            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
-            if(proccessed < 0)
-            {
-                throw("Head send error");
-            }
-        }
+        sendHead(SendMessage, size);
 
         //send message
         proccessed = 0;
@@ -188,9 +201,10 @@ namespace Net
                 throw("Message send error");
             }
         }
+
+        std::cout << "Message sended sucess" << std::endl;
         
         // recv message
-        std::cout << "recv-ing" << std::endl;
         proccessed = 0;
         while (proccessed < size)
         {
@@ -201,7 +215,7 @@ namespace Net
             }
         }
 
-        std::cout <<  "recv-ed" <<std::endl;
+        std::cout << "Message recv-ed success" << std::endl;
 
         // converting char* to std::string
         for(int i=0; i < size; i++)
@@ -210,11 +224,8 @@ namespace Net
         }
         delete[] answer;
 
-        std::cout << "Server answer: " << returning << std::endl;
-
-        std::cout << "End operation start" << std::endl;
-        endOperation();
-        std::cout << "End operatoin" << std::endl;
+        std::cout << "End Opeation" << std::endl;
+        recvSuccess();
         return returning;
     }
 

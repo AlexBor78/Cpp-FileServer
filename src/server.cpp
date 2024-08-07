@@ -57,10 +57,14 @@ namespace Net // class Server
             return;
         }
 
+        // std::cout << "Start joining / detaching client" << std::endl;
         for(int i=0; i < clients.size(); i++)
         {
-            clients.at(i).detach();
+            // std::cout << "Joing: " << i << std::endl;
+            clients.at(i).detach(); // error here
         }
+
+        // std::cout << "Client joined / detached" << std::endl;
         
         ProcessThread.join();
     }
@@ -85,25 +89,23 @@ namespace Net // class Server
                     }
 
                     Console.lock();
-                    std::cout << "New connection" << std::endl;
+                    std::cout << "\nNew connection\n" << std::endl;
                     Console.unlock();
+                    mtxClientCounter.lock();
+                    ++ClientCounter;
+                    mtxClientCounter.unlock();
 
                     bool ConnectoinOpen = 1;
                     int proccessed = 0;
-                    Protocol::Head *head = new Protocol::Head();
+                    Protocol::Head *head;
 
                     while (ConnectoinOpen WORK) 
                     {
-                        proccessed = 0;
-                        while (proccessed < Protocol::HeadSize WORK)
+                        if(!isWork)
                         {
-                            proccessed = recv(CltSock, head, Protocol::HeadSize, 0);
-                            // if(proccessed < 0)
-                            // {
-                                // std::cout << "noting to recv" << std::endl;
-                                // throw(1);
-                            // }
+                            ConnectoinOpen = 0;
                         }
+                        head = recvHead(CltSock);
 
                         switch (head->Action)
                         {
@@ -120,10 +122,12 @@ namespace Net // class Server
                         default:
                             break;
                         }
+                        delete head; // witout this line will mem leak
+                        std::cout << "End of operation " << std::endl;
                     }
                     close(CltSock);
                     Console.lock();
-                    std::cout << "Connection closed success" << std::endl;
+                    std::cout << "Connection closed success\n" << std::endl;
                     Console.unlock();
                 }));
             }
@@ -135,8 +139,6 @@ namespace Net // class Server
         int proccessed = 0;
         Protocol::Middle *answer = new Protocol::Middle();
         answer->Status = SuccesAction;
-
-        std::cout << "starting answering" << std::endl;
         
         while (proccessed < Protocol::MiddleSize WORK)
         {
@@ -147,7 +149,24 @@ namespace Net // class Server
                 throw("\"Succcess answering\" error");
             }
         }    
+        std::cout << "End sended success\n" << std::endl;
         return 0;  
+    }
+
+    Protocol::Head* Server::recvHead(const int &CltSock) // unused
+    {
+        int proccessed(0);
+        Protocol::Head* head = new Protocol::Head();
+        while (proccessed < Protocol::HeadSize WORK)
+        {
+            proccessed = recv(CltSock, head, Protocol::HeadSize, 0);
+            if(proccessed < 0)
+            {
+                throw("recv error");
+            }
+        }
+        std::cout << "Head ercv-ed success" << std::endl;
+        return head;        
     }
 
     int Server::chekConnection(const int& CltSock)
@@ -157,7 +176,7 @@ namespace Net // class Server
         Protocol::Middle *answer = new Protocol::Middle();
         answer->Status = SuccesAction;
         
-        while (proccessed < 0 WORK)
+        while (proccessed < Protocol::MiddleSize WORK)
         {
             proccessed = send(CltSock, answer, Protocol::MiddleSize, 0);
             if(proccessed < 0)
@@ -173,7 +192,7 @@ namespace Net // class Server
         char *msg = new char[size];
         int proccessed = 0;
 
-        while(proccessed < size)
+        while(proccessed < size WORK)
         {
             proccessed = recv(CltSock, msg, size, 0);
             if(proccessed < 0)
@@ -188,9 +207,7 @@ namespace Net // class Server
 
         proccessed = 0;
 
-        std::cout << "returning message..." << std::endl;
-
-        while (proccessed < size)
+        while (proccessed < size WORK)
         {
             proccessed = send(CltSock, msg, size, 0);
             if(proccessed < 0)
@@ -226,11 +243,18 @@ namespace Net // class Server
         ServAddr.sin_port = htons(ServPort);
         ServAddr.sin_addr.s_addr = inet_addr(ServIPAddr.c_str());
 
-        if(bind(ServSock, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
+        try
         {
+            if(bind(ServSock, (sockaddr*)&ServAddr, ServAddrLenth) < 0)
+            {
+                Exit(3);
+            }
+        }
+        catch(const std::system_error &e)
+        {
+            std::cout << "catched error: " << e.what() << std::endl;
             Exit(3);
         }
-
         ServStatus = 1;
 
         std::cout << "Inited success" << std::endl;
