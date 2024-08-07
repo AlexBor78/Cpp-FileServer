@@ -16,15 +16,6 @@ namespace Net
     ServAddr{ 0 },
     AddrLenth(sizeof(ServAddr))
     {}
-    Client::Client(Net::Server srv)
-    :
-    MySock(-1),
-    ServPort(srv.getPort()),
-    Status(0),
-    ServIP(srv.getIP()),
-    ServAddr{ 0 },
-    AddrLenth(sizeof(ServAddr))
-    {}
     Client::Client()
     :
     MySock(-1),
@@ -38,19 +29,16 @@ namespace Net
     void Client::connect()
     {
         init();
+        isconnected = 1;
     }
 
     void Client::disconnect()
     {
-        try
+        if(isconnected == 0)
         {
-            sendHead(EndSesion);
-            recvSuccess();       
+            return;
         }
-        catch(const char* e)
-        {
-            std::cout << e << std::endl;
-        }
+
         
         close(MySock);
     }
@@ -71,7 +59,7 @@ namespace Net
         }
 
         // connect to server
-        std::cout << "Trying to connect to server" << std::endl;
+        // std::cout << "Trying to connect to server" << std::endl;
         ServAddr.sin_family = AF_INET;
         ServAddr.sin_port = htons(ServPort);
         ServAddr.sin_addr.s_addr = inet_addr(ServIP.c_str());
@@ -81,152 +69,121 @@ namespace Net
             Exit(3);
         }
 
-        std::cout << "Connected to server" << std::endl;
+        // std::cout << "Connected to server" << std::endl;
         
         Status = 1;
 
-        // Success connected to server
-        // if(!chekConnection())
-        // {
-            // Exit(3);
-        // }
         std::cout << "\nInited && connected success\n" << std::endl;
     }
 
-    bool Client::chekConnection()
+    int Client::CltSend(const int &ServSock, void *buf, unsigned int size, int flags)
     {
-        Protocol::Middle *answer = new Protocol::Middle();
-        Protocol::Head *head = new Protocol::Head();
-        head->Action = ChekConnect;
-        int proccessed = 0;
-
-        while (proccessed < Protocol::HeadSize)
-        {
-            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
-            if(proccessed < 0)
-            {
-                return 0;
-            }
-        }
-
-        proccessed = 0;
-
-        while(proccessed < Protocol::MiddleSize)
-        {
-            proccessed = recv(MySock, answer, Protocol::MiddleSize, 0);
-            if(proccessed < 0)
-            {
-                return 0;
-            }
-        }
-
-        return answer->Status == SuccesAction;
-        // you can write:
-        return answer->Status; // it should work
-    }
-
-    int Client::sendHead(Net::Protocol::Head::ActionType action)
-    {
-        Protocol::Head *head = new Protocol::Head();
         int proccessed(0);
-
-        head->Action = action;
-
-        while(proccessed < Protocol::HeadSize)
+        while(proccessed < size)
         {
-            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            proccessed = send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
-                throw("Couldn't send head");
+                return -1;
             }
         }
-        std::cout << "Head sended success" << std::endl;
         return 0;
     }
 
-    int Client::sendHead(Net::Protocol::Head::ActionType action, uint32_t adddata)
+    int Client::CltSend(const int &ServSock, const void *buf, unsigned int size, int flags)
     {
-        Protocol::Head *head = new Protocol::Head();
         int proccessed(0);
-
-        head->Action = action;
-        head->AdditionalData = adddata;
-
-        while(proccessed < Protocol::HeadSize)
+        while(proccessed < size)
         {
-            proccessed = send_to_server(MySock, head, Protocol::HeadSize, 0);
+            proccessed = send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
-                throw("Couldn't send head");
+                return -1;
             }
         }
-        std::cout << "Head sended success" << std::endl;
         return 0;
     }
 
-    bool Client::recvSuccess()
+    int Client::CltRecv(const int &ServSock, void *buf, unsigned int size, int flags)
     {
-        Protocol::Middle *close = new Protocol::Middle();
         int proccessed(0);
-
-        while (proccessed < Protocol::MiddleSize)
+        while(proccessed  < size)
         {
-            proccessed = recv(MySock, close, Protocol::MiddleSize, 0);
-            if(proccessed < 0)
+            proccessed = recv(ServSock, buf + proccessed, size - proccessed, flags);
+            if(proccessed  < 0)
             {
-                return 0;
+                return -1;
             }
         }
+        return 0;
+    }
 
-        std::cout << "End sended success" << std::endl;
-        return close->Status;
+    int Client::sendHead(const int &ServSock, Protocol::Head* head)
+    {
+        if(CltSend(ServSock, head, Protocol::HeadSize, 0) < 0)
+        {
+            return -1;
+        }
+        return 0;
+    }
+
+    int Client::RecvSuccess(const int& ServSock)
+    {
+        Protocol::Middle *succ = new Protocol::Middle();
+        if(CltRecv(ServSock, succ, Protocol::MiddleSize, 0) < 0)
+        {
+            return -1;
+        }
+        int answer = succ->Status == SuccesAction;
+        delete succ;
+        return answer - 1;
     }
 
     std::string Client::send(const std::string& message)
     {
-        std::string returning;
-        int proccessed = 0, size = message.size();
-        char *answer = new char[size];
-
-        // send head: what server should doing
-        sendHead(SendMessage, size);
-
-        //send message
-        proccessed = 0;
-        while (proccessed < size)
+        if(message.size() > pow(2, 32))
         {
-            proccessed = send_to_server(MySock, message.c_str(), size, 0);
-            if(proccessed < 0)
-            {
-                throw("Message send error");
-            }
+            throw("Message is to big");
         }
 
-        std::cout << "Message sended sucess" << std::endl;
+        char *answerbuf = new char[message.size()];
+        std::string answer;
+        Protocol::Head *head = new Protocol::Head();
+        int size = message.size();
+
+        head->Action = SendMessage;
+        head->AdditionalData = message.size();
+
+        // send head
+        if(sendHead(MySock, head) < 0)
+        {
+            throw("Send head error");
+        }
         
-        // recv message
-        proccessed = 0;
-        while (proccessed < size)
+        // send message
+        if(CltSend(MySock, message.c_str(), size, 0) < 0)
         {
-            proccessed = recv(MySock, answer, size, 0);
-            if(proccessed < 0)
-            {
-                throw("Message recv error");
-            }
+            throw("Send message error");
         }
 
-        std::cout << "Message recv-ed success" << std::endl;
+        // recv message
+        if(CltRecv(MySock, answerbuf, size, 0) < 0)
+        {
+            throw("Recv message error");
+        }
 
-        // converting char* to std::string
+        if(RecvSuccess(MySock) < 0)
+        {
+            throw("End error");
+        }
+
         for(int i=0; i < size; i++)
         {
-            returning.push_back(answer[i]);
+            answer.push_back(answerbuf[i]);
         }
-        delete[] answer;
-
-        std::cout << "End Opeation" << std::endl;
-        recvSuccess();
-        return returning;
+        
+        delete[] answerbuf;
+        return answer;
     }
 
     bool Client::isConnected()
@@ -245,14 +202,6 @@ namespace Net
         return Status;
     }
 
-    void Client::Exit(int errcode, std::string err)
-    {
-        std::cout << "Client fatal error: " << err << std::endl;
-        std::cout<< "exit code: " << errcode <<std::endl;
-
-        disconnect();
-        exit(errcode);
-    }
     void Client::Exit(int errcode)
     {
         std::cout << "Client fatal error: " << GetErrorMessage(errcode) << std::endl;
@@ -260,14 +209,6 @@ namespace Net
 
         disconnect();
         exit(errcode);
-    }
-    void Client::Exit()
-    {
-        std::cout << "Client fatal error: unknow error" << std::endl;
-        std::cout<< "unknow exit code" <<std::endl;
-
-        disconnect();
-        exit(-1);
     }
 
     std::string Client::GetErrorMessage(int errcode)

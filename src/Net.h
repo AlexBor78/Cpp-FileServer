@@ -16,8 +16,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define PORT 5346
-#define IP "192.168.1.33"
+#define PORT 7733
+#define IP "127.0.0.2"
 
 namespace Net
 {

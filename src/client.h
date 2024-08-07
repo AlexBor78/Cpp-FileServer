@@ -18,15 +18,21 @@ namespace Net
         std::string ServIP;
         sockaddr_in ServAddr;
         unsigned int AddrLenth;
+        bool isconnected;
     private:
         void init();
+
+        int CltSend(const int&, void*, unsigned int, int);
+        int CltSend(const int&, const void*, unsigned int, int);
+        int CltRecv(const int&, void*, unsigned int, int);
+
+        int sendHead(const int&, Protocol::Head*);
+        int RecvSuccess(const int&);
+
+
     public:
         void connect();
         void disconnect();
-        bool chekConnection();
-        bool recvSuccess();
-        int sendHead(Net::Protocol::Head::ActionType);
-        int sendHead(Net::Protocol::Head::ActionType, uint32_t);
         std::string send(const std::string&);
         //void send(Net::Data);
         //void send(Net::File);
@@ -35,13 +41,10 @@ namespace Net
         bool isConnected();
         int GetStatus();
     private:
-        void Exit(int, std::string);
         void Exit(int);
-        void Exit();
         std::string GetErrorMessage(int);  
     public:
         Client(int, std::string);
-        Client(Net::Server);
         Client();
         ~Client();
     };

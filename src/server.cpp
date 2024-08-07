@@ -1,3 +1,4 @@
+// server.h
 #include "server.h"
 
 #define WORK && isWork
@@ -53,16 +54,22 @@ namespace Net // class Server
     void Server::stop()
     {
         isWork = 0;
+        ServMaxClients = 0;
         if(clients.empty())
         {
             return;
         }
 
-        for(int i=0; i < clients.size(); i++)
+        listen(ServSock, ServMaxClients);
+
+        for(int i=0; i < clients.size() - 1; i++)
         {
-            std::cout << "Joing: " << i << std::endl;
-            clients.at(i).detach(); // error here
+            clients.at(i).join();
         }
+
+        shutdown(ServSock, 2);
+        clients.back().join();
+        close(ServSock);
 
         ProcessThread.join();
     }
@@ -84,10 +91,19 @@ namespace Net // class Server
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    int CltSock = accept(ServSock, 0, 0);
+                    int CltSock = accept(ServSock, 0, 0); // error here
                     if(CltSock < 0)
                     {
-                        throw("Couldn't accept new connection");
+                        if(isWork)
+                        { 
+                            std::cout << "Couldn't accept new connection" << std::endl;
+                            return;
+                        }
+                        close(CltSock);
+                        Console.lock();
+                        std::cout << "Socket closed success\n" << std::endl;
+                        Console.unlock();
+                        return;
                     }
 
                     Console.lock();
@@ -102,18 +118,12 @@ namespace Net // class Server
 
                     while (ConnectoinOpen WORK) 
                     {
-                        if(!isWork)
-                        {
-                            ConnectoinOpen = 0;
-                        }
-
                         head = new Protocol::Head();
                         if(recvHead(CltSock, head) < 0)
                         {
                             Console.lock();
                             std::cerr << "Coulnd't recv Protocol::Head" << std::endl;
                             Console.unlock();
-                            return;
                         }
 
                         switch (head->Action)
@@ -124,7 +134,6 @@ namespace Net // class Server
                                 Console.lock();
                                 std::cerr << "Coulnd't check connection" << std::endl;
                                 Console.unlock();
-                                return;
                             } break;
                         case(SendMessage):
                             if(recvMsg(CltSock, head->AdditionalData) < 0)
@@ -132,18 +141,15 @@ namespace Net // class Server
                                 Console.lock();
                                 std::cerr << "Coulnd't recv message" << std::endl;
                                 Console.unlock();
-                                return;
                             } break;
                         case(EndSesion):
+                            ConnectoinOpen = 0;
                             if(sendSuccess(CltSock) < 0)
                             {
                                 Console.lock();
                                 std::cerr << "Coulnd't close sesion" << std::endl;
                                 Console.unlock();
-                                return;
-                            }
-                            ConnectoinOpen = 0;
-                            break;
+                            } break;
                         default:
                             Console.lock();
                             std::cerr << "Unknow Action" << std::endl;
@@ -153,9 +159,7 @@ namespace Net // class Server
                                 Console.lock();
                                 std::cerr << "Coldn't send Fail" << std::endl;
                                 Console.unlock();
-                            }
-                            return;
-                            break;
+                            } break;
                         }
                         delete head; // witout this line will mem leak
                         std::cout << "End of operation " << std::endl;
@@ -220,7 +224,7 @@ namespace Net // class Server
             return -1;
         }
         delete answer;
-        return 0;  
+        return 0;
     }
 
     int Server::recvHead(const int &CltSock, Protocol::Head* head)
@@ -249,15 +253,22 @@ namespace Net // class Server
     {
         char *msg = new char[size];
 
+        // recv message
         if(ServRecv(CltSock, msg, size, 0) < 0)
         {
             return -1;
         }
 
         Console.lock();
-        std::cout << "New message:" << std::string(msg) << std::endl;
+        std::cout << "New message:";// << std::string(msg) << std::endl;
+        for(int i=0;i < size; i++)
+        {
+            std::cout << msg[i];
+        }
+        std::cout << std::endl;
         Console.unlock();
 
+        // send message
         if(ServSend(CltSock, msg, size, 0) < 0)
         {
             return -1;
