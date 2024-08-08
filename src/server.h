@@ -18,7 +18,7 @@ namespace Net
         // std::mutex log; // todo logger
         std::thread ProcessThread;
         int ClientCounter, ServMaxClients;
-        //Net::Logger log;
+        Net::Logger log;
         bool isWork;
     private:
         void init();
@@ -30,6 +30,7 @@ namespace Net
         int sendFail(const int&);
         int recvHead(const int&, Protocol::Head*);
         
+        int endSesion(const int&);
         int chekConnection(const int&);
         int recvMsg(const int&, uint32_t);
     public:

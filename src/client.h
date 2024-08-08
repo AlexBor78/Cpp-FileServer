@@ -26,7 +26,9 @@ namespace Net
         int CltSend(const int&, const void*, unsigned int, int);
         int CltRecv(const int&, void*, unsigned int, int);
 
+        int checkConnection(const int&);
         int sendHead(const int&, Protocol::Head*);
+        int sendHead(const int&, Protocol::Head::ActionType);
         int RecvSuccess(const int&);
 
 

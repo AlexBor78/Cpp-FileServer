@@ -10,7 +10,8 @@ namespace Net
     {
     public:
         static const unsigned int HeadSize = 8;
-        static const unsigned int MiddleSize = 1;
+        static const unsigned int MiddleSize = 32;
+        static const unsigned int EndSize = 1;
     public:
         class Head
         {
@@ -37,21 +38,38 @@ namespace Net
             uint8_t MinorVersion2; // for future
             ActionType Action;
             uint32_t AdditionalData;
+        public:
+            Head(ActionType, uint32_t);
+            Head(ActionType);
+            Head();
         };
-        
+
         class Middle
         {
+        private:
+            uint64_t Data1;
+            uint64_t Data2;
+            uint64_t Data3;
+            uint64_t Data4;
         public:
-            enum ActionStatus : bool
+            Middle();
+        };
+
+        class End
+        {
+        public: enum ActionStatus : bool
             {
                 SuccesAction = 1,
-                #define SuccesAction Net::Protocol::Middle::ActionStatus::SuccesAction
+                #define SuccesAction Net::Protocol::End::ActionStatus::SuccesAction
 
                 FaildAction = 0
-                #define FaildAction Net::Protocol::Middle::ActionStatus::FaildAction
+                #define FaildAction Net::Protocol::End::ActionStatus::FaildAction
             };
         public:
             ActionStatus Status;
+        public:
+            End(ActionStatus);
+            End();
         };
     };
 } // namespace Net

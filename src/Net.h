@@ -1,5 +1,7 @@
 // Net.h
 #pragma once
+// #undef LOGGGER_H
+#include "config.h"
 #include <stdlib.h>
 #include <iostream>
 #include <string>
@@ -16,8 +18,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define PORT 7733
-#define IP "127.0.0.2"
+#include "logger.h"
 
 namespace Net
 {
@@ -29,8 +30,8 @@ namespace Net
     class File; // done
     //class Data; // done
 
+    class Logger; // done redefinition or incomplet, what the fuck?
     //class Error; // trash // don't use
-    //class Logger; // done redefinition or incomplet, what the fuck?
 } // namespace Net
 
 //#include "buffer.h"

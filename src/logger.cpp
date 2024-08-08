@@ -1,4 +1,3 @@
-#pragma once
 #include "logger.h"
 
 namespace Net
@@ -7,18 +6,9 @@ namespace Net
     {
         close();
     }
-    Logger::Logger(std::string name, int maxsize)
-    :
-    LogSize(0),
-    MaxLogSize(maxsize),
-    FileName(name),
-    logfile(),
-    mtxLog()
-    {}
     Logger::Logger(std::string name)
     :
     LogSize(0),
-    MaxLogSize(10000),
     FileName(name),
     logfile(),
     mtxLog()
@@ -26,7 +16,6 @@ namespace Net
     Logger::Logger()
     :
     LogSize(0),
-    MaxLogSize(10000),
     FileName("LogFile"),
     logfile(),
     mtxLog()
@@ -38,7 +27,7 @@ namespace Net
         {
             throw("Logger error: FileName is empty");
         }
-        if(MaxLogSize < 0)
+        if(LOG_MAX_SIZE < 0)
         {
             throw("Logger error: MaxLogSize < 0");
         }
@@ -49,7 +38,7 @@ namespace Net
 
         logfile.open(FileName, std::ios::app);
         LogSize = 0;
-        log("LogFile \"" + FileName +  "\" succes opened");
+        log("LogFile \"" + FileName +  "\" succes opened\n");
     }
 
     void Logger::close()
@@ -69,9 +58,9 @@ namespace Net
         {
             init();
         }
-        if(LogSize > MaxLogSize)
+        if(LogSize > LOG_MAX_SIZE)
         {
-            FileName = FileName + "2";
+            FileName = FileName + ".1";
             mtxLog.lock();
             LogSize = 0;
             mtxLog.unlock();
@@ -93,12 +82,4 @@ namespace Net
         return FileName;
     }
 
-    void Logger::setMaxLogSize(int maxsize)
-    {
-        MaxLogSize = maxsize;
-    }
-    int Logger::getMaxLogSize()
-    {
-        return MaxLogSize;
-    }
 } // namespace Net

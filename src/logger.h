@@ -1,8 +1,7 @@
 // logger.h
-#pragma once
 #include "Net.h"
 
-#ifndef LOGGGER_H
+#ifndef LOGGER_H
 #define LOGGER_H 1
 
 namespace Net
@@ -10,7 +9,7 @@ namespace Net
     class Logger
     {
     private:
-        int16_t MaxLogSize, LogSize;
+        int16_t LogSize;
         std::string FileName;
         std::fstream logfile;
         std::mutex mtxLog;
@@ -21,10 +20,7 @@ namespace Net
         void log(std::string);
         void setName(std::string);
         std::string getName();
-        void setMaxLogSize(int);
-        int getMaxLogSize();
     public:
-        Logger(std::string, int);
         Logger(std::string);
         Logger();
         ~Logger();

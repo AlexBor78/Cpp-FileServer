@@ -7,15 +7,19 @@ s=server
 S=ServerMain
 c=client
 C=ClientMain
+
 d=data
 f=file
 e=error
+l=logger
 buf=buffer
 p=protocol
-lib.o=$(t)$(s).o $(t)$(c).o 
-# $(t)$(p).o
+
+# 	  server	  client     protocol	logger
+lib.o=$(t)$(s).o $(t)$(c).o $(t)$(p).o $(t)$(l).o
+
 # $(t)$(d).o  
-# $(t)$(buf).o
+# $(t)$(buf).o# $(t)$(p).o
 # $(t)$(f).o
 
 ALL: server client
@@ -38,10 +42,16 @@ ClientMain.o:
 	mv $(C).o $(t)$(C).o
 
 lib:
-#	$(CC) $(CFlags) src/$(p).cpp -o $(p).o
-#	mv $(p).o $(t)$(p).o
+# protocol
+	$(CC) $(CFlags) src/$(p).cpp -o $(p).o
+	mv $(p).o $(t)$(p).o
+# logger
+	$(CC) $(CFlags) src/$(l).cpp -o $(l).o
+	mv $(l).o $(t)$(l).o
+# server
 	$(CC) $(CFlags) src/$(s).cpp -o $(s).o
 	mv $(s).o $(t)$(s).o
+# client
 	$(CC) $(CFlags) src/$(c).cpp -o $(c).o
 	mv $(c).o $(t)$(c).o
 #	$(CC) $(CFlags) src/$(buf).cpp -o $(buf).o
@@ -56,3 +66,7 @@ lib:
 clean:
 	rm $(t)*
 	rm $(b)*
+
+init:
+	mkdir $(b)
+	mkdir $(t)

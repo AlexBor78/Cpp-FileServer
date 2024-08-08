@@ -39,41 +39,17 @@ namespace Net
             return;
         }
 
-        
+        // if(sendHead(MySock, new Protocol::Head(EndSesion)) < 0)
+        // {
+        //     std::cerr << "Couldn't close connection" << std::endl;
+        // }
+
+        // if(RecvSuccess(MySock) < 0)
+        // {
+        //     std::cerr << "COulnd recv success close connection" << std::endl;
+        // }
+
         close(MySock);
-    }
-
-    void Client::init()
-    {
-        // check values for invalid
-        if(ServPort < 0 || ServIP.empty())
-        {
-            Exit(1);
-        }
-
-        // creating socket
-        MySock = socket(AF_INET, SOCK_STREAM, 0);
-        if(MySock < 0)
-        {
-            Exit(2);
-        }
-
-        // connect to server
-        // std::cout << "Trying to connect to server" << std::endl;
-        ServAddr.sin_family = AF_INET;
-        ServAddr.sin_port = htons(ServPort);
-        ServAddr.sin_addr.s_addr = inet_addr(ServIP.c_str());
-
-        if(connect_to_server(MySock, (sockaddr*)&ServAddr, AddrLenth) < 0)
-        {
-            Exit(3);
-        }
-
-        // std::cout << "Connected to server" << std::endl;
-        
-        Status = 1;
-
-        std::cout << "\nInited && connected success\n" << std::endl;
     }
 
     int Client::CltSend(const int &ServSock, void *buf, unsigned int size, int flags)
@@ -89,7 +65,6 @@ namespace Net
         }
         return 0;
     }
-
     int Client::CltSend(const int &ServSock, const void *buf, unsigned int size, int flags)
     {
         int proccessed(0);
@@ -126,17 +101,40 @@ namespace Net
         }
         return 0;
     }
+    int Client::sendHead(const int& ServSock, Protocol::Head::ActionType act)
+    {
+        Protocol::Head *head = new Protocol::Head(act);
+        if(CltSend(ServSock, head, Protocol::HeadSize, 0) < 0)
+        {
+            delete head;
+            return -1;
+        }
+        delete head;
+        return 0;
+    }
 
     int Client::RecvSuccess(const int& ServSock)
     {
-        Protocol::Middle *succ = new Protocol::Middle();
-        if(CltRecv(ServSock, succ, Protocol::MiddleSize, 0) < 0)
+        Protocol::End *succ = new Protocol::End();
+        if(CltRecv(ServSock, succ, Protocol::EndSize, 0) < 0)
         {
             return -1;
         }
         int answer = succ->Status == SuccesAction;
         delete succ;
         return answer - 1;
+    }
+
+    int Client::checkConnection(const int& ServSock)
+    {
+        Protocol::Head *head = new Protocol::Head(ChekConnect);
+        if(sendHead(ServSock, head) < 0)
+        {
+            delete head;
+            return -1;
+        }
+        delete head;
+        return RecvSuccess(ServSock);
     }
 
     std::string Client::send(const std::string& message)
@@ -148,10 +146,9 @@ namespace Net
 
         char *answerbuf = new char[message.size()];
         std::string answer;
-        Protocol::Head *head = new Protocol::Head();
+        Protocol::Head *head = new Protocol::Head(SendMessage);
         int size = message.size();
 
-        head->Action = SendMessage;
         head->AdditionalData = message.size();
 
         // send head
@@ -184,6 +181,44 @@ namespace Net
         
         delete[] answerbuf;
         return answer;
+    }
+
+    void Client::init()
+    {
+        // check values for invalid
+        if(ServPort < 0 || ServIP.empty())
+        {
+            Exit(1);
+        }
+
+        // creating socket
+        MySock = socket(AF_INET, SOCK_STREAM, 0);
+        if(MySock < 0)
+        {
+            Exit(2);
+        }
+
+        // connect to server
+        // std::cout << "Trying to connect to server" << std::endl;
+        ServAddr.sin_family = AF_INET;
+        ServAddr.sin_port = htons(ServPort);
+        ServAddr.sin_addr.s_addr = inet_addr(ServIP.c_str());
+
+        if(connect_to_server(MySock, (sockaddr*)&ServAddr, AddrLenth) < 0)
+        {
+            Exit(3);
+        }
+
+        // std::cout << "Connected to server" << std::endl;
+        
+        Status = 1;
+
+        if(checkConnection(MySock) < 0)
+        {
+            throw("Couldn't chek connection to server");
+        }
+
+        std::cout << "\nInited && connected success\n" << std::endl;
     }
 
     bool Client::isConnected()
