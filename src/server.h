@@ -9,22 +9,24 @@ namespace Net
     class Server
     {
     private:
-        int ServSock, ServPort, ServStatus;
-        unsigned int ServAddrLenth;
+        int ServSock{-1}, ServPort{-1}, ServStatus{0};
+        sockaddr_in ServAddr{0};
+        unsigned int ServAddrLenth{sizeof(ServAddr)};
         std::string ServIPAddr;
-        sockaddr_in ServAddr;
         
         std::mutex Console, mtxClientCounter, mtxDataFile;
-        std::vector<std::thread> clients;
+        std::vector<std::thread> clients{};
         std::thread ProcessThread;
 
-        int ClientCounter, ServMaxClients;
+        int ClientCounter, ServMaxQueue{SERVER_MAX_CLIENTS_QUEUE};
+        
         std::fstream DataFile;
-        Net::Logger log;
-        bool isWork;
+        Net::Logger log{SERVER_LOG_FILE};
+        bool isWork{0};
     private:
-        void init();
+        int init();
         void proccess();
+        void NewConnection();
         
         int ServSend(const int&, void*, unsigned int, int);
         int ServRecv(const int&, void*, unsigned int, int);
@@ -37,7 +39,7 @@ namespace Net
         int endSesion(const int&);
         int chekConnection(const int&);
         int recvMsg(const int&, uint32_t);
-        int recvFile(const int&, uint64_t);
+        // int recvFile(const int&, uint64_t); // todo
     public:
         void start();
         void stop();
@@ -47,10 +49,8 @@ namespace Net
         int getPort();
         std::string getIP();  
     private:
-        uint64_t getTotalUseFilesSize();
-        int AddTotalUsedSize(uint64_t);
-        void Exit(int);
-        std::string GetErrorMessage(int);    
+        uint64_t getTotalUseFilesSize();  // todo: rewrite
+        int AddTotalUsedSize(uint64_t); // todo: rewrite
     public:
         Server(int, std::string);
         Server();

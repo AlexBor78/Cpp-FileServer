@@ -14,11 +14,11 @@ namespace Net
     class Client
     {
     private:
-        int MySock, ServPort, Status;
-        std::string ServIP;
-        sockaddr_in ServAddr;
-        unsigned int AddrLenth;
-        bool isconnected;
+        int MySock{-1}, ServPort{-1};
+        std::string ServIP{};
+        sockaddr_in ServAddr{0};
+        unsigned int AddrLenth{sizeof(ServAddr)};
+        bool isconnected{0};
     private:
         void init();
 
@@ -39,10 +39,7 @@ namespace Net
         //void send()
     public:
         bool isConnected();
-        int GetStatus();
-    private:
-        void Exit(int);
-        std::string GetErrorMessage(int);  
+        // int GetStatus();
     public:
         Client(int, std::string);
         Client();

@@ -8,8 +8,8 @@
  */
 
 // this port and IP adress of server, and to that client connecting (server and client)
-#define PORT 7633
-#define IP "127.0.0.2"
+#define PORT 7635
+#define IP "192.168.188.236"
 
 
 
@@ -20,6 +20,9 @@
 
 // pasword to admin-client 
 #define SERVER_ADMIN_PASWORD "01234567"
+
+#define SERVER_LOG_FILE "data/ServerLog"
+#define SERVER_DATA_FILE "data/ServerData"
 
 
 
