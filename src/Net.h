@@ -7,6 +7,7 @@
 #include <cmath>
 
 // STL
+#include <functional>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -37,9 +38,9 @@ namespace Net
 } // namespace Net
 
 
+#include "protocol.h"
 #include "config.h"
 #include "logger.h"
-#include "protocol.h"
 #include "server.h"
 #include "client.h"
 
