@@ -28,7 +28,7 @@ namespace Net // class Server
         ServMaxQueue = SERVER_MAX_CLIENTS_QUEUE;
         ProcessThread = std::thread([&]()
         {
-            proccess();
+            servProccess();
         });
         log.log("Server started");
     }
@@ -57,7 +57,7 @@ namespace Net // class Server
         log.log("Server stoped");
     }
 
-    void Server::proccess()
+    void Server::servProccess()
     {
         std::cout << "Listening for new connections..." << std::endl;
         log.log("Listening started");
@@ -75,42 +75,21 @@ namespace Net // class Server
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    NewConnection();
+                    newClient();
                 }));
             }
         }
     }
 
-    void Server::NewConnection()
+    void Server::newClient()
     {
-        int CltSock = accept(ServSock, 0, 0);
-        if(CltSock < 0)
-        {
-            if(isWork)
-            { 
-                std::cout << "Couldn't accept new connection" << std::endl;
-                return;
-            }
-
-            close(CltSock);
-
-            Console.lock();
-            std::cout << "Socket closed success\n" << std::endl;
-            Console.unlock();
-
+        int CltSock;
+        if(acceptNewConnectoin(CltSock))
+        { 
             return;
         }
 
-        log.log("New connection");
-        Console.lock();
-        std::cout << "\nNew connection\n" << std::endl;
-        Console.unlock();
-
-        mtxClientCounter.lock();
-        ++ClientCounter;
-        mtxClientCounter.unlock();
-
-        bool ConnectoinOpen = 1;
+        bool ConnectoinOpen{1};
         Protocol::Head *head;
 
         while (ConnectoinOpen AND_WORK) 
@@ -123,55 +102,12 @@ namespace Net // class Server
                 Console.unlock();
             }
 
-            switch (head->Action)
+            if(cltDo(CltSock, head) > 0)
             {
-            case(ChekConnect):
-                log.log("ChekConnection");
-                if(chekConnection(CltSock) < 0)
-                {
-                    Console.lock();
-                    std::cerr << "Coulnd't check connection" << std::endl;
-                    Console.unlock();
-                } break;
-            case(SendMessage):
-                log.log("SendMessage");
-                if(recvMsg(CltSock, head->AdditionalData) < 0)
-                {
-                    Console.lock();
-                    std::cerr << "Coulnd't recv message" << std::endl;
-                    Console.unlock();
-                } break;
-            case(EndSesion):
                 ConnectoinOpen = 0;
-                log.log("EndSesion");
-                if(endSesion(CltSock) < 0)
-                {
-                    Console.lock();
-                    std::cerr << "Coulnd't close sesion" << std::endl;
-                    Console.unlock();
-                } break;
-            case(NotinhToDo):
-                break;
-            case(SendFile):
-                sendFail(CltSock);
-                break;
-            default:
-                if(isWork)
-                {
-                    Console.lock();
-                    std::cerr << "Unknow Action" << std::endl;
-                    Console.unlock();
-                    log.log("Unknow Action");
-                    if(sendFail(CltSock) < 0)
-                    {
-                        Console.lock();
-                        std::cerr << "Coldn't send Fail" << std::endl;
-                        Console.unlock();
-                    }
-                } break;
             }
+            
             delete head; // witout this line will mem leak
-            log.log("End of operation");
         }
         close(CltSock);
         log.log("Connection closed");
@@ -179,6 +115,87 @@ namespace Net // class Server
         Console.lock();
         std::cout << "Connection closed success\n" << std::endl;
         Console.unlock();
+    }
+
+    int Server::acceptNewConnectoin(int& CltSock)
+    {
+        CltSock = accept(ServSock, 0, 0);
+        if(CltSock < 0)
+        {
+            if(isWork)
+            {
+                Console.lock();
+                std::cout << "Couldn't accept new connection" << std::endl;
+                Console.unlock();
+                return -1;
+            }
+
+            close(CltSock);
+
+            Console.lock();
+            std::cout << "Socket closed success\n" << std::endl;
+            Console.unlock();
+
+            return -1;
+        }
+
+        log.log("New connection");
+        Console.lock();
+        std::cout << "\nNew connection\n" << std::endl;
+        Console.unlock();
+
+        mtxClientCounter.lock();
+        ++ClientCounter;
+        mtxClientCounter.unlock();
+        return 0;
+    }
+
+    int Server::cltDo(const int& CltSock, const Protocol::Head* head)
+    {
+        switch (head->Action)
+        {
+        case(ChekConnect):
+            if(chekConnection(CltSock) < 0)
+            {
+                Console.lock();
+                std::cerr << "Coulnd't check connection" << std::endl;
+                Console.unlock();
+            } break;
+        case(SendMessage):
+            if(recvMsg(CltSock, head->AdditionalData) < 0)
+            {
+                Console.lock();
+                std::cerr << "Coulnd't recv message" << std::endl;
+                Console.unlock();
+            } break;
+        case(EndSesion):
+            if(endSesion(CltSock) < 0)
+            {
+                Console.lock();
+                std::cerr << "Coulnd't close sesion" << std::endl;
+                Console.unlock();
+            } return 1; break;
+        case(NotinhToDo):
+            break;
+        case(SendFile):
+            sendFail(CltSock);
+            break;
+        default:
+            if(isWork)
+            {
+                Console.lock();
+                std::cerr << "Unknow Action" << std::endl;
+                Console.unlock();
+                log.log("Unknow Action");
+                if(sendFail(CltSock) < 0)
+                {
+                    Console.lock();
+                    std::cerr << "Coldn't send Fail" << std::endl;
+                    Console.unlock();
+                }
+            } break;
+        }
+        return 0;
     }
 
     int Server::ServSend(const int &CltSock, void *buf, unsigned int size, int flags)
@@ -211,6 +228,7 @@ namespace Net // class Server
 
     int Server::sendSuccess(const int& CltSock)
     {
+        log.log("Success end of operation\n");
         Protocol::End *answer = new Protocol::End(SuccesAction);
         int ret = ServSend(CltSock, answer, Protocol::EndSize, 0);
         delete answer;
@@ -219,6 +237,7 @@ namespace Net // class Server
 
     int Server::sendFail(const int& CltSock)
     {
+        log.log("Failed end of operation\n");
         Protocol::End *answer = new Protocol::End(FaildAction);
         int ret = ServSend(CltSock, answer, Protocol::EndSize, 0);
         delete answer;
@@ -237,16 +256,19 @@ namespace Net // class Server
 
     int Server::endSesion(const int& CltSock)
     {
+        log.log("EndSesion");
         return sendSuccess(CltSock);
     }
 
     int Server::chekConnection(const int& CltSock)
     {
+        log.log("ChekConnection");
         return sendSuccess(CltSock);
     }
 
     int Server::recvMsg(const int& CltSock, uint32_t size)
     {
+        log.log("SendMessage");
         char *msg = new char[size];
 
         // recv message
@@ -310,6 +332,7 @@ namespace Net // class Server
         ServStatus = 1;
 
         std::cout << "Inited success" << std::endl;
+        return 0;
     }
 
     bool Server::isStarted()

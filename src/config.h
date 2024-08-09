@@ -8,8 +8,8 @@
  */
 
 // this port and IP adress of server, and to that client connecting (server and client)
-#define PORT 7635
-#define IP "192.168.188.236"
+#define PORT 5543
+#define IP "127.0.0.2"
 
 
 

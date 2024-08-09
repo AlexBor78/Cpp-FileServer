@@ -25,9 +25,12 @@ namespace Net
         bool isWork{0};
     private:
         int init();
-        void proccess();
-        void NewConnection();
-        
+        void servProccess();
+
+        void newClient();
+        int acceptNewConnectoin(int&);
+        int cltDo(const int&, const Protocol::Head*);
+
         int ServSend(const int&, void*, unsigned int, int);
         int ServRecv(const int&, void*, unsigned int, int);
         

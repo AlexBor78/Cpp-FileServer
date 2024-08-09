@@ -57,9 +57,9 @@ lib:
 clean:
 	rm $(t)*
 	rm $(b)*
-	rm $(dl)*
+	rm $(d)*
 
 init:
 	mkdir $(b)
 	mkdir $(t)
-	mkdir $(dl)
+	mkdir $(d)
