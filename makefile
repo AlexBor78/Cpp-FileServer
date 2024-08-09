@@ -2,25 +2,20 @@ CC=g++
 CFlags=-c -Wall
 t=tmp/
 b=build/
-dl=data/
+d=data/
 
 s=server
 S=ServerMain
 c=client
 C=ClientMain
 
-d=data
 f=file
-e=error
 l=logger
 buf=buffer
 p=protocol
 
-# 	  server	  client     protocol	logger
-lib.o=$(t)$(s).o $(t)$(c).o $(t)$(p).o $(t)$(l).o
-
-# $(t)$(d).o  
-# $(t)$(buf).o# $(t)$(p).o
+# 	  logger	  protocol    server	client 
+lib.o=$(t)$(l).o $(t)$(p).o $(t)$(s).o $(t)$(c).o
 # $(t)$(f).o
 
 ALL: server client
@@ -43,26 +38,21 @@ ClientMain.o:
 	mv $(C).o $(t)$(C).o
 
 lib:
-# protocol
-	$(CC) $(CFlags) src/$(p).cpp -o $(p).o
-	mv $(p).o $(t)$(p).o
 # logger
 	$(CC) $(CFlags) src/$(l).cpp -o $(l).o
 	mv $(l).o $(t)$(l).o
+# file
+# 	$(CC) $(CFlags) src/$(f).cpp -o $(f).o
+# 	mv $(f).o $(t)$(f).o
+# protocol
+	$(CC) $(CFlags) src/$(p).cpp -o $(p).o
+	mv $(p).o $(t)$(p).o
 # server
 	$(CC) $(CFlags) src/$(s).cpp -o $(s).o
 	mv $(s).o $(t)$(s).o
 # client
 	$(CC) $(CFlags) src/$(c).cpp -o $(c).o
 	mv $(c).o $(t)$(c).o
-#	$(CC) $(CFlags) src/$(buf).cpp -o $(buf).o
-#	mv $(buf).o $(t)$(buf).o
-#	$(CC) $(CFlags) src/$(d).cpp -o $(d).o
-#	mv $(d).o $(t)$(d).o
-# 	$(CC) $(CFlags) src/$(e).cpp -o $(e).o
-# 	mv $(e).o $(t)$(e).o
-# 	$(CC) $(CFlags) src/$(f).cpp -o $(f).o
-# 	mv $(f).o $(t)$(f).o
 
 clean:
 	rm $(t)*
@@ -72,4 +62,4 @@ clean:
 init:
 	mkdir $(b)
 	mkdir $(t)
-	mkdir data
+	mkdir $(dl)

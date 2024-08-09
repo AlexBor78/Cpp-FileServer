@@ -25,6 +25,7 @@ namespace Net
     private:
         void init();
         void proccess();
+        
         int ServSend(const int&, void*, unsigned int, int);
         int ServRecv(const int&, void*, unsigned int, int);
         

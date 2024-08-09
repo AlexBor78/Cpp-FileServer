@@ -95,11 +95,7 @@ namespace Net
 
     int Client::sendHead(const int &ServSock, Protocol::Head* head)
     {
-        if(CltSend(ServSock, head, Protocol::HeadSize, 0) < 0)
-        {
-            return -1;
-        }
-        return 0;
+        return CltSend(ServSock, head, Protocol::HeadSize, 0);
     }
     int Client::sendHead(const int& ServSock, Protocol::Head::ActionType act)
     {
@@ -139,6 +135,7 @@ namespace Net
 
     std::string Client::send(const std::string& message)
     {
+        // chek values to invalid
         if(message.size() > pow(2, 32))
         {
             throw("Message is to big");
@@ -146,10 +143,8 @@ namespace Net
 
         char *answerbuf = new char[message.size()];
         std::string answer;
-        Protocol::Head *head = new Protocol::Head(SendMessage);
+        Protocol::Head *head = new Protocol::Head(SendMessage, message.size());
         int size = message.size();
-
-        head->AdditionalData = message.size();
 
         // send head
         if(sendHead(MySock, head) < 0)

@@ -1,45 +1,43 @@
 // Net.h
 #pragma once
-#include "config.h"
 
 // STD
 #include <cstdlib>
 #include <cstdio>
+#include <cmath>
 
 // STL
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 #include <thread>
-#include <mutex>
 #include <chrono>
-#include <cmath>
+#include <mutex>
 
 // sockets && inet
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 
 namespace Net
 {
     class Protocol;
-    class Server; // done
-    class Client; // done
-    
-    class Buffer; // done
-    class File; // done
-    //class Data; // done
 
-    class Logger; // done redefinition or incomplet, what the fuck?
-    //class Error; // trash // don't use
+    class Server; 
+    class Client; 
+
+    // class Buffer; 
+    class File; 
+
+    class Logger; 
 } // namespace Net
 
-//#include "buffer.h"
-// #include "data.h"
+
+#include "config.h"
 #include "logger.h"
 #include "protocol.h"
 #include "server.h"

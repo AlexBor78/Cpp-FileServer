@@ -38,7 +38,9 @@ namespace Net
 
         logfile.open(FileName, std::ios::app);
         LogSize = 0;
-        log("LogFile \"" + FileName +  "\" succes opened\n");
+        mtxLog.lock();
+        logfile << "LogFile \"" << FileName << "\" succes opened\n" << std::endl;
+        mtxLog.unlock();
     }
 
     void Logger::close()

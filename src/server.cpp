@@ -11,31 +11,33 @@ namespace Net // class Server
 
     Server::Server(int port, std::string ip)
     :
+    ServSock(-1),
     ServPort(port),
+    ServStatus(0),
     ServIPAddr(ip),
     ServAddr{ 0 },
-    ServAddrLenth(sizeof(ServAddr)),
-    ServSock(-1),
     ClientCounter(0),
-    ServStatus(0),
-    ServMaxClients(SERVER_MAX_CLIENTS_QUEUE),
+    log("data/ServerLog"),
+    clients(),
     isWork(0),
-    log("ServerLog"),
-    DataFile()
+    DataFile(),
+    ServAddrLenth(sizeof(ServAddr)),
+    ServMaxClients(SERVER_MAX_CLIENTS_QUEUE)
     {}
     Server::Server()
     :
-    ServPort(0),
+    ServSock(-1),
+    ServPort(-1),
+    ServStatus(0),
     ServIPAddr(),
     ServAddr{ 0 },
-    ServAddrLenth(sizeof(ServAddr)),
-    ServSock(-1),
     ClientCounter(0),
-    ServStatus(0),
-    ServMaxClients(SERVER_MAX_CLIENTS_QUEUE),
+    log("data/ServerLog"),
+    clients(),
     isWork(0),
-    log("ServerLog"),
-    DataFile()
+    DataFile(),
+    ServAddrLenth(sizeof(ServAddr)),
+    ServMaxClients(SERVER_MAX_CLIENTS_QUEUE)
     {}
 
     void Server::start()
@@ -66,13 +68,13 @@ namespace Net // class Server
 
         listen(ServSock, ServMaxClients);
 
-        for(int i=0; i < clients.size() - 1; i++) // join all client threads
+        for(int i = 0; i < clients.size() - 1; i++)
         {
             clients.at(i).join();
         }
 
         shutdown(ServSock, 2);
-        clients.back().join(); // join wait-client thread
+        clients.back().join(); // join accept-connection thread
         close(ServSock);
 
         ProcessThread.join();
@@ -97,7 +99,7 @@ namespace Net // class Server
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    int CltSock = accept(ServSock, 0, 0); // error here
+                    int CltSock = accept(ServSock, 0, 0);
                     if(CltSock < 0)
                     {
                         if(isWork)
@@ -105,18 +107,21 @@ namespace Net // class Server
                             std::cout << "Couldn't accept new connection" << std::endl;
                             return;
                         }
+
                         close(CltSock);
+
                         Console.lock();
                         std::cout << "Socket closed success\n" << std::endl;
                         Console.unlock();
+
                         return;
                     }
 
                     log.log("New connection");
-
                     Console.lock();
                     std::cout << "\nNew connection\n" << std::endl;
                     Console.unlock();
+
                     mtxClientCounter.lock();
                     ++ClientCounter;
                     mtxClientCounter.unlock();
@@ -183,13 +188,13 @@ namespace Net // class Server
                         }
                         delete head; // witout this line will mem leak
                         log.log("End of operation");
-                        //std::cout << "End of operation " << std::endl;
                     }
                     close(CltSock);
+                    log.log("Connection closed");
+                    
                     Console.lock();
                     std::cout << "Connection closed success\n" << std::endl;
                     Console.unlock();
-                    log.log("Connection closed");
                 }));
             }
         }
@@ -295,9 +300,9 @@ namespace Net // class Server
 
     int Server::recvFile(const int& CltSock, uint64_t FileSize)
     {
+        Protocol::Middle *middle = new Protocol::Middle();
         char *FileName, *buf = new char[FILE_BLOCK_SIZE];
         uint64_t it;
-        Protocol::Middle *middle = new Protocol::Middle();
 
         if(FileSize == 0)
         {
@@ -317,7 +322,11 @@ namespace Net // class Server
             return -1;
         }
 
-        it = (FileSize / FILE_BLOCK_SIZE) + 1;
+        it = (FileSize / FILE_BLOCK_SIZE);
+        if(FILE_BLOCK_SIZE % FileSize > 0)
+        {
+            ++it;
+        }
         
         if(recvMiddle(CltSock, middle) < 0)
         {
@@ -336,7 +345,7 @@ namespace Net // class Server
             return -1;
         }
 
-        for(int i=0; i < it; i++)
+        for(int i = 0; i < it; i++)
         {
             if(ServRecv(CltSock, buf, FILE_BLOCK_SIZE, 0) < 0)
             {
@@ -349,8 +358,9 @@ namespace Net // class Server
             // тут написать в логику для записи в файл
         }
         
-        
-
+        delete[] FileName;
+        delete[] buf;
+        delete middle;
         return 0;
     }
 
@@ -423,9 +433,11 @@ namespace Net // class Server
         }
 
         uint64_t size;
+
         mtxDataFile.lock();
         DataFile >> size;
         mtxDataFile.unlock();
+
         return size;
     }
 
@@ -438,8 +450,10 @@ namespace Net // class Server
 
         mtxDataFile.lock();
         uint64_t size2;
+        
         DataFile >> size2;
         DataFile << (size + size2);
+
         mtxDataFile.unlock();
         return 0;
     }

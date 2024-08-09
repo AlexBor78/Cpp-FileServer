@@ -30,7 +30,7 @@
 // number of lines befor file will close and create new log-file
 #define LOG_MAX_SIZE 10000 
 
-// max log-file size, if file size > MAX_LOG_FILE_SIZE file will close and create new fill
+// max log-file size, if file size > LOG_MAX_FILE_SIZE file will close and create new fill
 #define LOG_MAX_FILE_SIZE MB
 
 

@@ -31,12 +31,10 @@ namespace Net
         int sendHead(const int&, Protocol::Head::ActionType);
         int RecvSuccess(const int&);
 
-
     public:
         void connect();
         void disconnect();
         std::string send(const std::string&);
-        //void send(Net::Data);
         //void send(Net::File);
         //void send()
     public:
