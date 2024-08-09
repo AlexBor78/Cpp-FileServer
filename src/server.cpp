@@ -20,7 +20,8 @@ namespace Net // class Server
     ServStatus(0),
     ServMaxClients(SERVER_MAX_CLIENTS_QUEUE),
     isWork(0),
-    log("ServerLog")
+    log("ServerLog"),
+    DataFile()
     {}
     Server::Server()
     :
@@ -33,7 +34,8 @@ namespace Net // class Server
     ServStatus(0),
     ServMaxClients(SERVER_MAX_CLIENTS_QUEUE),
     isWork(0),
-    log("ServerLog")
+    log("ServerLog"),
+    DataFile()
     {}
 
     void Server::start()
@@ -159,6 +161,11 @@ namespace Net // class Server
                                 std::cerr << "Coulnd't close sesion" << std::endl;
                                 Console.unlock();
                             } break;
+                        case(NotinhToDo):
+                            break;
+                        case(SendFile):
+                            sendFail(CltSock);
+                            break;
                         default:
                             if(isWork)
                             {
@@ -237,6 +244,11 @@ namespace Net // class Server
         return ServRecv(CltSock, head, Protocol::HeadSize, 0);        
     }
 
+    int Server::recvMiddle(const int& CltSock, Protocol::Middle* middle)
+    {
+        return ServRecv(CltSock, middle, Protocol::MiddleSize, 0);
+    }
+
     int Server::endSesion(const int& CltSock)
     {
         return sendSuccess(CltSock);
@@ -278,6 +290,67 @@ namespace Net // class Server
         {
             return -1;
         }
+        return 0;
+    }
+
+    int Server::recvFile(const int& CltSock, uint64_t FileSize)
+    {
+        char *FileName, *buf = new char[FILE_BLOCK_SIZE];
+        uint64_t it;
+        Protocol::Middle *middle = new Protocol::Middle();
+
+        if(FileSize == 0)
+        {
+            if(ServRecv(CltSock, &FileSize, 8, 0) < 0)
+            {
+                delete[] buf;
+                delete middle;
+                return -1;
+            }
+        }
+
+        if(FileSize > FILE_MAX_SIZE || FileSize + getTotalUseFilesSize() > FILES_MAX_SUM_SIZE)
+        {
+            sendFail(CltSock);
+            delete[] buf;
+            delete middle;
+            return -1;
+        }
+
+        it = (FileSize / FILE_BLOCK_SIZE) + 1;
+        
+        if(recvMiddle(CltSock, middle) < 0)
+        {
+            delete[] buf;
+            delete middle;
+            return -1;
+        }
+
+        FileName = new char[middle->Data1];
+
+        if(ServRecv(CltSock, FileName, middle->Data1, 0) < 0)
+        {
+            delete[] FileName;
+            delete[] buf;
+            delete middle;
+            return -1;
+        }
+
+        for(int i=0; i < it; i++)
+        {
+            if(ServRecv(CltSock, buf, FILE_BLOCK_SIZE, 0) < 0)
+            {
+                delete[] FileName;
+                delete[] buf;
+                delete middle;
+                return -1;
+            }
+
+            // тут написать в логику для записи в файл
+        }
+        
+        
+
         return 0;
     }
 
@@ -335,6 +408,40 @@ namespace Net // class Server
     std::string Server::getIP()
     {
         return ServIPAddr;
+    }
+
+    uint64_t Server::getTotalUseFilesSize()
+    {
+        if(!DataFile.is_open())
+        {
+            DataFile.open("data/ServerData", std::ios::in);
+        }
+
+        if(DataFile.tellg() <= 0)
+        {
+            return 0;
+        }
+
+        uint64_t size;
+        mtxDataFile.lock();
+        DataFile >> size;
+        mtxDataFile.unlock();
+        return size;
+    }
+
+    int Server::AddTotalUsedSize(uint64_t size)
+    {
+        if(!DataFile.is_open())
+        {
+            DataFile.open("data/ServerData", std::ios::ate); // now use std::ios::ate
+        }
+
+        mtxDataFile.lock();
+        uint64_t size2;
+        DataFile >> size2;
+        DataFile << (size + size2);
+        mtxDataFile.unlock();
+        return 0;
     }
 
     void Server::Exit(int errcode)

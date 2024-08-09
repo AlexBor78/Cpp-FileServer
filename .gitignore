@@ -1,6 +1,7 @@
 .vscode
 
 build/
+data/
 tmp/
 
 ServerLog

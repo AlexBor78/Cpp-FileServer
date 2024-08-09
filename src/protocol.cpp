@@ -9,9 +9,13 @@ namespace Net
     {}
     Protocol::Head::Head(ActionType actoin)
     :
-    Action(actoin)
+    Action(actoin),
+    AdditionalData(0)
     {}
     Protocol::Head::Head()
+    :
+    Action(NotinhToDo),
+    AdditionalData(0)
     {}
 
     Protocol::Middle::Middle()

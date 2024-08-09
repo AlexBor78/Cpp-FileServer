@@ -17,20 +17,23 @@ namespace Net
         {
         public: enum ActionType : uint8_t
             {
-                SendMessage = 10,
+                SendMessage = 11,
                 #define SendMessage Protocol::Head::ActionType::SendMessage
 
-                SendData = 20,
+                SendData = 21,
                 #define SendData Protocol::Head::ActionType::SendData
 
                 SendFile = 30,
                 #define SendFile Protocol::Head::ActionType::SendFile
 
-                ChekConnect = 0,
+                ChekConnect = 1,
                 #define ChekConnect Protocol::Head::ActionType::ChekConnect
 
-                EndSesion = 255
+                EndSesion = 255,
                 #define EndSesion Protocol::Head::ActionType::EndSesion
+
+                NotinhToDo = 0
+                #define NotinhToDo Protocol::Head::ActionType::NotinhToDo
             };
         public:
             uint8_t MajorVersion;  // for future
@@ -46,7 +49,7 @@ namespace Net
 
         class Middle
         {
-        private:
+        public:
             uint64_t Data1;
             uint64_t Data2;
             uint64_t Data3;

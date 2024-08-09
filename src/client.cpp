@@ -39,14 +39,14 @@ namespace Net
             return;
         }
 
-        // if(sendHead(MySock, new Protocol::Head(EndSesion)) < 0)
+        // из-за этого происходит неправильное закрытие на сервере почему-то
+        // if(sendHead(MySock, EndSesion) < 0)
         // {
-        //     std::cerr << "Couldn't close connection" << std::endl;
+        //     throw("Send EndSesion-head error");
         // }
-
         // if(RecvSuccess(MySock) < 0)
         // {
-        //     std::cerr << "COulnd recv success close connection" << std::endl;
+        //     throw("Recv succes error");
         // }
 
         close(MySock);

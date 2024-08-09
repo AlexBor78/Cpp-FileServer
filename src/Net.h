@@ -1,8 +1,12 @@
 // Net.h
 #pragma once
-// #undef LOGGGER_H
 #include "config.h"
-#include <stdlib.h>
+
+// STD
+#include <cstdlib>
+#include <cstdio>
+
+// STL
 #include <iostream>
 #include <string>
 #include <vector>
@@ -12,13 +16,13 @@
 #include <chrono>
 #include <cmath>
 
+// sockets && inet
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "logger.h"
 
 namespace Net
 {
@@ -36,6 +40,7 @@ namespace Net
 
 //#include "buffer.h"
 // #include "data.h"
+#include "logger.h"
 #include "protocol.h"
 #include "server.h"
 #include "client.h"

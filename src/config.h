@@ -31,7 +31,7 @@
 #define LOG_MAX_SIZE 10000 
 
 // max log-file size, if file size > MAX_LOG_FILE_SIZE file will close and create new fill
-#define LOG_MAX_FILE_SIZE 1 * MB
+#define LOG_MAX_FILE_SIZE MB
 
 
 
@@ -39,14 +39,17 @@
 
 // не менять эти значения
 // Dont't change this values
-#define KB pow(2, 10) // 1KB
-#define MB pow(2, 20) // 1MB
-#define GB pow(2, 30) // 1GB
+#define KB 1024 // pow(2, 10) // 1KB
+#define MB 1048576 // pow(2, 20) // 1MB
+#define GB 1'073'741'824 // pow(2, 30) // 1GB
 // #define TB pow(2, 40) // 1TB
 // #define PB pow(2, 50) // 1PB
 
 // Max file size to send to server and recv on client
-#define FILE_MAX_SIZE 1 * MB // = 1 MB
+#define FILE_MAX_SIZE MB // = 1 MB
 
 // Total max files size 
-#define FILES_MAX_SUM_SIZE 1 * GB // = 1GB
+#define FILES_MAX_SUM_SIZE GB // = 1GB
+
+// size of send blocks of file
+#define FILE_BLOCK_SIZE KB 

@@ -1,4 +1,4 @@
- // server.h
+// server.h
 #include "Net.h"
 
 #ifndef SERVER_H
@@ -10,14 +10,16 @@ namespace Net
     {
     private:
         int ServSock, ServPort, ServStatus;
-        std::vector<std::thread> clients;
         unsigned int ServAddrLenth;
         std::string ServIPAddr;
         sockaddr_in ServAddr;
-        std::mutex Console, mtxClientCounter;
-        // std::mutex log; // todo logger
+        
+        std::mutex Console, mtxClientCounter, mtxDataFile;
+        std::vector<std::thread> clients;
         std::thread ProcessThread;
+
         int ClientCounter, ServMaxClients;
+        std::fstream DataFile;
         Net::Logger log;
         bool isWork;
     private:
@@ -29,10 +31,12 @@ namespace Net
         int sendSuccess(const int&);
         int sendFail(const int&);
         int recvHead(const int&, Protocol::Head*);
+        int recvMiddle(const int&, Protocol::Middle*);
         
         int endSesion(const int&);
         int chekConnection(const int&);
         int recvMsg(const int&, uint32_t);
+        int recvFile(const int&, uint64_t);
     public:
         void start();
         void stop();
@@ -42,6 +46,8 @@ namespace Net
         int getPort();
         std::string getIP();  
     private:
+        uint64_t getTotalUseFilesSize();
+        int AddTotalUsedSize(uint64_t);
         void Exit(int);
         std::string GetErrorMessage(int);    
     public:

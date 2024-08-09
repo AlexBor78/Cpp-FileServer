@@ -2,6 +2,7 @@ CC=g++
 CFlags=-c -Wall
 t=tmp/
 b=build/
+dl=data/
 
 s=server
 S=ServerMain
@@ -66,7 +67,9 @@ lib:
 clean:
 	rm $(t)*
 	rm $(b)*
+	rm $(dl)*
 
 init:
 	mkdir $(b)
 	mkdir $(t)
+	mkdir data
