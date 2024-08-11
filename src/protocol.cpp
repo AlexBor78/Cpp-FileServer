@@ -9,23 +9,16 @@ namespace Net
     {}
     Protocol::Head::Head(ActionType actoin)
     :
-    Action(actoin),
-    AdditionalData(0)
+    Action(actoin)
     {}
-    Protocol::Head::Head()
-    :
-    Action(NotinhToDo),
-    AdditionalData(0)
-    {}
+    Protocol::Head::Head() = default;
 
-    Protocol::Middle::Middle()
-    {}
+    Protocol::Middle::Middle() = default;
 
     Protocol::End::End(ActionStatus action)
     :
     Status(action)
     {}
-    Protocol::End::End()
-    {}
+    Protocol::End::End() = default;
 
 } // namespace Net
