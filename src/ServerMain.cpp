@@ -18,6 +18,8 @@ int main()
                 break;
             }
         }
+
+        delete& server;
         
         std::cout << "Success end of programm" << std::endl;
     }

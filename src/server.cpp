@@ -1,6 +1,7 @@
 #include "server.h"
 
 #define AND_WORK && isWork
+// docs in docs/Server.md
 
 namespace Net // class Server
 {
@@ -22,10 +23,14 @@ namespace Net // class Server
         {
             return;
         }
-        init();
+        if(init() < 0)
+        {
+            std::cerr << "Couldn't start server" << std::endl;
+            throw("Couldn't start server");
+            return;
+        }
 
         isWork = 1;
-        ServMaxQueue = SERVER_MAX_CLIENTS_QUEUE;
         ProcessThread = std::thread([&]()
         {
             servProccess();
@@ -36,14 +41,17 @@ namespace Net // class Server
     void Server::stop()
     {
         isWork = 0;
-        ServMaxQueue = 0;
         if(clients.empty())
         {
             return;
         }
 
-        listen(ServSock, ServMaxQueue);
+        listen(ServSock, 0);
 
+        std::cout << "Start joinig clients" << std::endl;
+
+        // ProcessThread.join(); // error here? // if it here error after cout"End joining";
+        
         for(int i = 0; i < clients.size() - 1; i++)
         {
             clients.at(i).join();
@@ -53,7 +61,9 @@ namespace Net // class Server
         clients.back().join(); // join accept-connection thread
         close(ServSock);
 
-        ProcessThread.join();
+        std::cout << "End joinig clients" << std::endl;
+
+        ProcessThread.join(); // error here?
         log.log("Server stoped");
     }
 
@@ -66,7 +76,7 @@ namespace Net // class Server
         ClientCounter = 0;
         int counter = 0;
 
-        listen(ServSock, ServMaxQueue);
+        listen(ServSock, SERVER_MAX_CLIENTS_QUEUE);
 
         while(isWork)
         {
@@ -75,16 +85,18 @@ namespace Net // class Server
                 ++counter;
                 clients.push_back(std::thread([&]()
                 {
-                    newClient();
+                    cltProccess();
+                    std::cout << "New client thread" << std::endl;
                 }));
             }
         }
+        std::cout << "Procc End" << std::endl;
     }
 
-    void Server::newClient()
+    void Server::cltProccess()
     {
         int CltSock;
-        if(acceptNewConnectoin(CltSock))
+        if(servAccept(CltSock) < 0)
         { 
             return;
         }
@@ -117,7 +129,7 @@ namespace Net // class Server
         Console.unlock();
     }
 
-    int Server::acceptNewConnectoin(int& CltSock)
+    int Server::servAccept(int& CltSock)
     {
         CltSock = accept(ServSock, 0, 0);
         if(CltSock < 0)
@@ -131,10 +143,6 @@ namespace Net // class Server
             }
 
             close(CltSock);
-
-            Console.lock();
-            std::cout << "Socket closed success\n" << std::endl;
-            Console.unlock();
 
             return -1;
         }
@@ -178,7 +186,7 @@ namespace Net // class Server
         case(NotinhToDo):
             break;
         case(SendFile):
-            sendFail(CltSock);
+            sendFail(CltSock); // SendFile now not done
             break;
         default:
             if(isWork)
@@ -340,7 +348,7 @@ namespace Net // class Server
         return isWork;
     }
 
-    int Server::GetStatus()
+    int Server::getStatus()
     {
         return ServStatus;
     }
