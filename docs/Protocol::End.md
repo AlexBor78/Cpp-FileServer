@@ -19,8 +19,8 @@ public:
 
 ### SuccesAction
 
-Server send End with that, when command did success
+Server send End with that, when command complete success
 
 ### FaildAction
 
-Server send End with that, when command didn't success
+Server send End with that, when command didn't complete success
