@@ -19,10 +19,18 @@
 #define SERVER_MAX_CLIENTS_QUEUE 5 // recommend: 5 - 15
 
 // pasword to admin-client 
-#define SERVER_ADMIN_PASWORD "01234567"
+#define SERVER_ADMIN_PASWORD "01234567" // unused now
 
 #define SERVER_LOG_FILE "data/ServerLog"
-#define SERVER_DATA_FILE "data/ServerData"
+#define SERVER_DATA_FILE "data/ServerData" // unused now
+
+#define SERVER_PASSWORD_TO_CONNECT "password" // unused now
+
+// client preferens
+
+// only for test:
+#define CLIENT_AUTO_SEND_MESSAGE true
+#define CLIENT_MESSAGE "My message"
 
 
 
@@ -34,7 +42,7 @@
 #define LOG_MAX_SIZE 10000 
 
 // max log-file size, if file size > LOG_MAX_FILE_SIZE file will close and create new fill
-#define LOG_MAX_FILE_SIZE MB
+#define LOG_MAX_FILE_SIZE MB // unused now
 
 
 

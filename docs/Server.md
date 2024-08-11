@@ -28,7 +28,7 @@
 
 - start()
 - stop()
-
+<br><br>
 - isStarted()
 - getStatus()
 - getPort()
@@ -38,103 +38,106 @@
 
 ### start
 
-call init and starting server
+Call init and starting server.
 
-no returning
+Not returning.
 
 ### stop
 
-join all threads and close socket
+Join all threads and close all connections and socket.
 
-no returning
+Not returning.
 
 ### init
 
-It initing Server to start
-
+Technical function, that initing Server to start,
 Creating socket and bind that.
 
-return 0 if success,
-or return -1 if not success
+Return 0 if success,
+or return -1 if not success.
 
 ### servProccess
 
-Create threads for clients
+Create threads for clients.
 
-no returning
+Not returning.
 
 ### cltProccess
 
-proccess of work with clients, use other functions
+Proccess of work with clients, use other functions to perform actions.
 
-no returning
+Not returning.
 
 ### servAccept
 
-Accept client connection
+Call in cltProccess().
+Accept client connection,
 
-return 0 if succes and -1 if unsuccess
+return 0 if succes and -1 if unsuccess.
 
 ### cltDo
 
-action proccess
+Call in cltProccess().
+Action proccessing,
 
-return 0 if succes and 1 if connection shold will close
+return 0 if succes and <strong>1 if connection shold will close.</strong>
 
 ### ServSend && ServRecv
 
-technical functions for send/recv data
+Technical functions for send/recv data.
 
-based on functions send/recv
+Based on functions send/recv.
 
-return 0 if succcess or -1 if unsuccess
+Return 0 if succcess or -1 if unsuccess.
 
 ### recvHead
 
-functions for easy recv Protocol::Head
+Technical function for easy recv Protocol::Head,
+based on ServRecv.
 
-based on ServRecv
-
-return 0 if succcess or -1 if unsuccess
+Return 0 if succcess or -1 if unsuccess.
 
 ### recvMiddle
 
-functions for easy recv Protocol::Middle
-
+Technical function for easy recv Protocol::Middle,
 based on ServRecv
 
-return 0 if succcess or -1 if unsuccess
+Return 0 if succcess or -1 if unsuccess.
 
 ### sendSuccess
 
-functions for easy send success Protocol::End
-
+Technical function for easy send success Protocol::End,
 based on ServSend
 
-return 0 if succcess or -1 if unsuccess
+Return 0 if succcess or -1 if unsuccess.
 
 ### sendFail
 
-functions for easy send unsuccess Protocol::End
-
+Technical function for easy send unsuccess Protocol::End,
 based on ServSend
 
-return 0 if succcess or -1 if unsuccess
+Return 0 if succcess or -1 if unsuccess
 
 ### chekConnection()
 
-after action proccess if client want to cheak connection, call in cltDo()
+Call in cltDo().
 
-return 0 if succcess or -1 if unsuccess
+Send success Head to test connectoin.
+
+Return 0 if succcess or -1 if unsuccess
 
 ### endSesion
 
-after action proccess if client want to close sesion, call in cltDo()
+Call in cltDo().
 
-return 0 if succcess or -1 if unsuccess
+Send success Head if success, then start to close.
+
+Return 0 if succcess or -1 if unsuccess
 
 ### recvMsg()
 
-after action proccess if client want to send message, call in cltDo()
+Call in cltDo().
 
-return 0 if succcess or -1 if unsuccess
+Recv message, print to console and return back to client.
+
+Return 0 if succcess or -1 if unsuccess.
