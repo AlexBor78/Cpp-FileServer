@@ -16,25 +16,26 @@ namespace Net
 
     void Client::connect()
     {
+        if(isconnected)
+        {
+            return;
+        }
         init();
     }
 
     void Client::disconnect()
     {
-        if(isconnected == 0)
+        if(!isconnected)
         {
             return;
         }
 
-        // из-за этого происходит неправильное закрытие на сервере почему-то
-        // if(sendHead(MySock, EndSesion) < 0)
-        // {
-        //     throw("Send EndSesion-head error");
-        // }
-        // if(RecvSuccess(MySock) < 0)
-        // {
-        //     throw("Recv succes error");
-        // }
+        // из-за этого происходит неправильное закрытие \/
+        if(closeConnection(MySock) < 0)
+        {
+            std::cerr << "Couldn't close connection" << std::endl;
+            // throw("Couldn't close connection"); // can be in destructor
+        }
 
         close(MySock);
     }
@@ -101,6 +102,7 @@ namespace Net
         Protocol::End *succ = new Protocol::End();
         if(CltRecv(ServSock, succ, Protocol::EndSize, 0) < 0)
         {
+            delete succ;
             return -1;
         }
         int answer = succ->Status == SuccesAction;
@@ -108,16 +110,31 @@ namespace Net
         return answer - 1;
     }
 
-    int Client::checkConnection(const int& ServSock)
+    int Client::chekConnection(const int& ServSock)
     {
-        Protocol::Head *head = new Protocol::Head(ChekConnect);
-        if(sendHead(ServSock, head) < 0)
+        if(sendHead(ServSock, ChekConnect) < 0)
         {
-            delete head;
             return -1;
         }
-        delete head;
         return RecvSuccess(ServSock);
+    }
+
+    int Client::closeConnection(const int& ServSock)
+    {
+        if(sendHead(ServSock, EndSesion) < 0)
+        {
+            std::cerr << "\"EndSesion Head\" send error" << std::endl;
+            return -1;
+        }
+
+        if(RecvSuccess(ServSock) < 0)
+        {
+            std::cerr << "Recv error" << std::endl;
+            return -1;
+        }
+
+        return 0;
+        // return RecvSuccess(ServSock);
     }
 
     std::string Client::send(const std::string& message)
@@ -128,16 +145,19 @@ namespace Net
             throw("Message is to big");
         }
 
-        char *answerbuf = new char[message.size()];
+        // definitoin
+        char *answerbuf;
         std::string answer;
-        Protocol::Head *head = new Protocol::Head(SendMessage, message.size());
         int size = message.size();
+        Protocol::Head *head = new Protocol::Head(SendMessage, size);
 
         // send head
         if(sendHead(MySock, head) < 0)
         {
+            delete head;
             throw("Send head error");
         }
+        delete head;
         
         // send message
         if(CltSend(MySock, message.c_str(), size, 0) < 0)
@@ -146,13 +166,16 @@ namespace Net
         }
 
         // recv message
+        answerbuf = new char[size];
         if(CltRecv(MySock, answerbuf, size, 0) < 0)
         {
+            delete[] answerbuf;
             throw("Recv message error");
         }
 
         if(RecvSuccess(MySock) < 0)
         {
+            delete[] answerbuf;
             throw("End error");
         }
 
@@ -190,7 +213,7 @@ namespace Net
             throw("Couldn't connectn to server");
         }
 
-        if(checkConnection(MySock) < 0)
+        if(chekConnection(MySock) < 0)
         {
             throw("Couldn't chek connection to server");
         }
