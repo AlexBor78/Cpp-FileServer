@@ -31,7 +31,7 @@ namespace Net
         }
 
         // из-за этого происходит неправильное закрытие \/
-        if(closeConnection(MySock) < 0)
+        if(closeConnection(MySock) < 0) // comment this to turn off send HEad with CloseConnectoin
         {
             std::cerr << "Couldn't close connection" << std::endl;
             // throw("Couldn't close connection"); // can be in destructor
