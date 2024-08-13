@@ -17,11 +17,11 @@ namespace Net
         {
         public: enum ActionType : uint8_t
             {
-                NotinhToDo = 0,
-                #define NotinhToDo Protocol::Head::ActionType::NotinhToDo
+                NotingToDo = 0,
+                #define NotingToDo Protocol::Head::ActionType::NotingToDo
 
-                ChekConnect = 1,
-                #define ChekConnect Protocol::Head::ActionType::ChekConnect
+                CheckConnect = 1,
+                #define CheckConnect Protocol::Head::ActionType::CheckConnect
 
                 SendMessage = 11,
                 #define SendMessage Protocol::Head::ActionType::SendMessage
@@ -32,14 +32,14 @@ namespace Net
                 SendFile = 30,
                 #define SendFile Protocol::Head::ActionType::SendFile
 
-                EndSesion = 255
-                #define EndSesion Protocol::Head::ActionType::EndSesion
+                EndSession = 255
+                #define EndSession Protocol::Head::ActionType::EndSession
             };
         public:
             uint8_t MajorVersion;  // for future
             uint8_t MinorVersion1; // for future
             uint8_t MinorVersion2; // for future
-            ActionType Action{NotinhToDo};
+            ActionType Action{NotingToDo};
             uint32_t AdditionalData{0};
         public:
             Head(ActionType, uint32_t);

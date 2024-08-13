@@ -31,7 +31,7 @@ namespace Net
         }
 
         // из-за этого происходит неправильное закрытие \/
-        if(closeConnection(MySock) < 0) // comment this to turn off send HEad with CloseConnectoin
+        if(closeConnection(MySock) < 0) // comment this to turn off send Head with CloseConnectoin
         {
             std::cerr << "Couldn't close connection" << std::endl;
             // throw("Couldn't close connection"); // can be in destructor
@@ -42,10 +42,10 @@ namespace Net
 
     int Client::CltSend(const int &ServSock, void *buf, unsigned int size, int flags)
     {
-        int proccessed(0);
+        int proccessed{0};
         while(proccessed < size)
         {
-            proccessed = send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
+            proccessed += send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
                 return -1;
@@ -55,10 +55,10 @@ namespace Net
     }
     int Client::CltSend(const int &ServSock, const void *buf, unsigned int size, int flags)
     {
-        int proccessed(0);
+        int proccessed{0};
         while(proccessed < size)
         {
-            proccessed = send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
+            proccessed += send_to_server(ServSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
                 return -1;
@@ -69,10 +69,10 @@ namespace Net
 
     int Client::CltRecv(const int &ServSock, void *buf, unsigned int size, int flags)
     {
-        int proccessed(0);
+        int proccessed{0};
         while(proccessed  < size)
         {
-            proccessed = recv(ServSock, buf + proccessed, size - proccessed, flags);
+            proccessed += recv(ServSock, buf + proccessed, size - proccessed, flags);
             if(proccessed  < 0)
             {
                 return -1;
@@ -105,14 +105,14 @@ namespace Net
             delete succ;
             return -1;
         }
-        int answer = succ->Status == SuccesAction;
+        bool answer = (succ->Status == SuccesAction);
         delete succ;
         return answer - 1;
     }
 
-    int Client::chekConnection(const int& ServSock)
+    int Client::checkConnection(const int& ServSock)
     {
-        if(sendHead(ServSock, ChekConnect) < 0)
+        if(sendHead(ServSock, CheckConnect) < 0)
         {
             return -1;
         }
@@ -121,9 +121,9 @@ namespace Net
 
     int Client::closeConnection(const int& ServSock)
     {
-        if(sendHead(ServSock, EndSesion) < 0)
+        if(sendHead(ServSock, EndSession) < 0)
         {
-            std::cerr << "\"EndSesion Head\" send error" << std::endl;
+            std::cerr << "\"EndSession Head\" send error" << std::endl;
             return -1;
         }
 
@@ -213,7 +213,7 @@ namespace Net
             throw("Couldn't connectn to server");
         }
 
-        if(chekConnection(MySock) < 0)
+        if(checkConnection(MySock) < 0)
         {
             throw("Couldn't chek connection to server");
         }

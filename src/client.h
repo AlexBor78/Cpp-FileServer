@@ -30,7 +30,7 @@ namespace Net
         int sendHead(const int&, Protocol::Head::ActionType);
         int RecvSuccess(const int&);
 
-        int chekConnection(const int&);
+        int checkConnection(const int&);
         int closeConnection(const int&);
 
     public:
