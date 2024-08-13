@@ -48,9 +48,7 @@ namespace Net // class Server
 
         listen(ServSock, 0);
 
-        std::cout << "Start joinig clients" << std::endl;
-
-        // ProcessThread.join(); // error here? // if it here error after cout"End joining";
+        ProcessThread.join(); // error here? // if it here error after cout"End joining";
         
         for(int i = 0; i < clients.size() - 1; i++)
         {
@@ -61,9 +59,9 @@ namespace Net // class Server
         clients.back().join(); // join accept-connection thread
         close(ServSock);
 
-        std::cout << "End joinig clients" << std::endl;
+        clients.clear();
 
-        ProcessThread.join(); // error here?
+
         log.log("Server stoped");
     }
 
@@ -83,14 +81,13 @@ namespace Net // class Server
             if(counter <= ClientCounter)
             {
                 ++counter;
+                std::cout << "New client thread" << std::endl;
                 clients.push_back(std::thread([&]()
                 {
                     cltProccess();
-                    std::cout << "New client thread" << std::endl;
                 }));
             }
         }
-        std::cout << "Procc End" << std::endl;
     }
 
     void Server::cltProccess()
@@ -100,7 +97,6 @@ namespace Net // class Server
         { 
             return;
         }
-
         bool ConnectoinOpen{1};
         Protocol::Head *head;
 
@@ -121,6 +117,9 @@ namespace Net // class Server
             
             delete head; // witout this line will mem leak
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // FUCK
+        
         close(CltSock);
         log.log("Connection closed");
         
@@ -141,20 +140,19 @@ namespace Net // class Server
                 Console.unlock();
                 return -1;
             }
-
             close(CltSock);
 
             return -1;
         }
+        mtxClientCounter.lock();
+        ++ClientCounter;
+        mtxClientCounter.unlock();
 
         log.log("New connection");
         Console.lock();
         std::cout << "\nNew connection\n" << std::endl;
         Console.unlock();
 
-        mtxClientCounter.lock();
-        ++ClientCounter;
-        mtxClientCounter.unlock();
         return 0;
     }
 
@@ -162,7 +160,7 @@ namespace Net // class Server
     {
         switch (head->Action)
         {
-        case(ChekConnect):
+        case(CheckConnect):
             if(chekConnection(CltSock) < 0)
             {
                 Console.lock();
@@ -176,17 +174,17 @@ namespace Net // class Server
                 std::cerr << "Coulnd't recv message" << std::endl;
                 Console.unlock();
             } break;
-        case(EndSesion):
+        case(EndSession):
             if(endSesion(CltSock) < 0)
             {
                 Console.lock();
                 std::cerr << "Coulnd't close sesion" << std::endl;
                 Console.unlock();
             } return 1; break;
-        case(NotinhToDo):
+        case(NotingToDo):
             break;
         case(SendFile):
-            sendFail(CltSock); // SendFile now not done
+            sendFail(CltSock); // SendFile isn't done
             break;
         default:
             if(isWork)
@@ -208,10 +206,10 @@ namespace Net // class Server
 
     int Server::ServSend(const int &CltSock, void *buf, unsigned int size, int flags)
     {
-        int proccessed(0);
+        int proccessed{0};
         while(proccessed < size AND_WORK)
         {
-            proccessed = send(CltSock, buf + proccessed, size - proccessed, flags);
+            proccessed += send(CltSock, buf + proccessed, size - proccessed, flags);
             if(proccessed < 0)
             {
                 return -1;
@@ -222,10 +220,10 @@ namespace Net // class Server
 
     int Server::ServRecv(const int& CltSock, void *buf, unsigned int size, int flags)
     {
-        int proccessed(0);
+        int proccessed{0};
         while(proccessed  < size AND_WORK)
         {
-            proccessed = recv(CltSock, buf + proccessed, size - proccessed, flags);
+            proccessed += recv(CltSock, buf + proccessed, size - proccessed, flags);
             if(proccessed  < 0)
             {
                 return -1;
@@ -264,7 +262,7 @@ namespace Net // class Server
 
     int Server::endSesion(const int& CltSock)
     {
-        log.log("EndSesion");
+        log.log("EndSession");
         return sendSuccess(CltSock);
     }
 

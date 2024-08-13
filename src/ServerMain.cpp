@@ -19,7 +19,7 @@ int main()
             }
         }
 
-        delete& server;
+        server.stop();
         
         std::cout << "Success end of programm" << std::endl;
     }
